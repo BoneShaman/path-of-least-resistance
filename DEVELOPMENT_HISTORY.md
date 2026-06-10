@@ -96,7 +96,7 @@ Regular races were made denser and faster. Consecutive clean actions now build F
 
 ### Progressive Assistance
 
-Puzzle guidance now escalates every 10 seconds. Each revealed shortest-path move is numbered directly on the relevant tile, keeping the race moving without replacing player control.
+Puzzle guidance now escalates at 10, 15, and 20 seconds. Each revealed shortest-path move is numbered directly on the relevant tile, keeping the race moving without replacing player control.
 
 ### Music and Presentation
 
@@ -106,4 +106,4 @@ The new art direction rejects generic neon mascot styling in favor of a handmade
 
 ## Codex Attribution
 
-The creator-provided project history describes the original implementation and iteration work as being completed with Codex using a `GPT-5.5` model. This statement is retained as creator-provided attribution and is not an independently verified model-telemetry record.
+The creator-provided project history describes the original implementation and iteration work as being completed with ChatGPT and then moved into Codex once a basic scaffold was completed.

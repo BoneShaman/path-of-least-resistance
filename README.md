@@ -20,9 +20,7 @@ The complete campaign faces Noderunners `3200`, `3400`, `3600`, `3800`, and `400
 
 ## Play
 
-**[Play The Path of Least Resistance](https://boneshaman.github.io/path-of-least-resistance/)**
-
-The game also runs locally without a build step:
+The game runs locally without a build step:
 
 ```bash
 python3 -m http.server 8000
@@ -62,14 +60,14 @@ Each puzzle is generated from a known breadth-first-search distance from the sol
 If a player is stuck:
 
 - At 10 seconds, the first optimal tile is highlighted and numbered `1`.
-- At 20 seconds, the second optimal move is added as `2`.
-- Further optimal moves are revealed every 10 seconds.
+- At 15 seconds, the next valid tile is numbered `2`.
+- At 20 seconds, the final hint is numbered `3`.
 
-This preserves the shortest-path puzzle while preventing the race from stalling.
+Hints recalculate against the current board and never reveal more than one new move at a time.
 
 ## How Codex Helped
 
-Codex was used as a design, implementation, testing, and release collaborator.
+Project scaffold was done in ChatGPT, and then moved to Codex. Codex was used as a design, implementation, testing, and release collaborator.
 
 It helped:
 
@@ -82,8 +80,6 @@ It helped:
 - Inspect screenshots and gameplay state with Playwright
 - Develop the original mechanical-penguin art direction
 - Prepare repository documentation and deployment
-
-The creator-provided iteration history identifies the earlier Codex work as using a `GPT-5.5` Codex model. That attribution is preserved as supplied by the creator; this repository does not independently verify model metadata.
 
 See [DEVELOPMENT_HISTORY.md](DEVELOPMENT_HISTORY.md) for the original concept and iteration trail.
 
@@ -110,7 +106,3 @@ See [ART_DIRECTION.md](ART_DIRECTION.md).
 - Local progress saved with `localStorage`
 - `window.render_game_to_text()` exposes concise game state for testing
 - `window.advanceTime(ms)` enables deterministic simulation
-
-## License
-
-[MIT](LICENSE)

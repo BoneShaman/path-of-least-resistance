@@ -178,6 +178,7 @@ button{font:inherit;border:0}
 .pipe{position:absolute;inset:0}
 .pipe::before,.pipe::after{content:"";position:absolute;background:linear-gradient(90deg,#a9f9ff,#65caff);box-shadow:0 0 8px rgba(139,246,255,.76)}
 .pipe.lr::before{left:0;right:0;top:43%;height:14%;border-radius:999px}
+.pipe.ud::before{top:0;bottom:0;left:43%;width:14%;border-radius:999px}
 .pipe.ld::before,.pipe.ul::before,.pipe.rd::before,.pipe.ur::before{left:43%;width:14%;top:43%;bottom:0;border-radius:999px}
 .pipe.ld::after,.pipe.ul::after{left:0;right:43%;top:43%;height:14%;border-radius:999px}
 .pipe.rd::after,.pipe.ur::after{left:43%;right:0;top:43%;height:14%;border-radius:999px}
@@ -186,7 +187,9 @@ button{font:inherit;border:0}
 .tile.flow .pipe::before,.tile.flow .pipe::after{background:linear-gradient(90deg,#fff2a8,#ffba51);box-shadow:0 0 11px rgba(255,224,109,.95)}
 .port{position:absolute;background:var(--gold);box-shadow:0 0 12px var(--gold);border-radius:999px}
 #sourcePort{width:14px;height:5px;left:-7px;top:16.5%}
-#sinkPort{width:5px;height:14px;left:49.3%;bottom:-7px}
+#sinkPort.exit-bottom{width:5px;height:14px;left:49.3%;bottom:-7px}
+#sinkPort.exit-top{width:5px;height:14px;left:49.3%;top:-7px}
+#sinkPort.exit-right{width:14px;height:5px;right:-7px;top:49.3%}
 .puzzleHint{margin-top:12px;color:var(--muted);font-size:12px;line-height:1.42;text-align:center}
 .rivalTerminal{position:relative;min-height:278px;padding:10px 8px 12px;border:1px solid rgba(255,114,144,.24);border-radius:20px;background:linear-gradient(180deg,rgba(43,12,31,.78),rgba(6,10,23,.9));box-shadow:0 18px 48px rgba(0,0,0,.28),0 0 24px rgba(255,114,144,.08);overflow:hidden}
 .rivalTerminal::before{content:"";position:absolute;left:50%;top:42px;bottom:15px;width:2px;transform:translateX(-50%);background:linear-gradient(180deg,rgba(255,114,144,.04),rgba(255,114,144,.38),rgba(255,216,109,.28));box-shadow:0 0 12px rgba(255,114,144,.34)}
@@ -209,6 +212,7 @@ button{font:inherit;border:0}
 .rivalMiniPipe{position:absolute;inset:0}
 .rivalMiniPipe::before,.rivalMiniPipe::after{content:"";position:absolute;background:#ffafc1;box-shadow:0 0 5px rgba(255,114,144,.72)}
 .rivalMiniPipe.lr::before{left:0;right:0;top:44%;height:13%;border-radius:999px}
+.rivalMiniPipe.ud::before{top:0;bottom:0;left:44%;width:13%;border-radius:999px}
 .rivalMiniPipe.ld::before,.rivalMiniPipe.ul::before,.rivalMiniPipe.rd::before,.rivalMiniPipe.ur::before{left:44%;width:13%;top:44%;bottom:0;border-radius:999px}
 .rivalMiniPipe.ld::after,.rivalMiniPipe.ul::after{left:0;right:44%;top:44%;height:13%;border-radius:999px}
 .rivalMiniPipe.rd::after,.rivalMiniPipe.ur::after{left:44%;right:0;top:44%;height:13%;border-radius:999px}
@@ -391,7 +395,7 @@ button{font:inherit;border:0}
         <div class="puzzleTop">
           <div>
             <div class="label" id="gatePuzzleLabel">OHM GATE 1 · SHORTEST PATH</div>
-            <div class="puzzleTitle">Push → OPEN</div>
+            <div class="puzzleTitle" id="puzzleTitle">Push → OPEN</div>
           </div>
           <div class="juice"><small>Electric node juice</small><span id="juiceCount">0</span></div>
         </div>
@@ -461,6 +465,7 @@ const foeName = document.getElementById('foeName');
 const foeRail = document.getElementById('foeRail');
 const rivalRail = document.getElementById('rivalRail');
 const juiceCount = document.getElementById('juiceCount');
+const puzzleTitle = document.getElementById('puzzleTitle');
 const soundToggle = document.getElementById('soundToggle');
 const flowChainEl = document.getElementById('flowChain');
 const flowValueEl = document.getElementById('flowValue');
@@ -468,7 +473,7 @@ const flowMeterFill = document.getElementById('flowMeterFill');
 const dots = [...document.querySelectorAll('.dot')];
 
 const TAU = Math.PI * 2;
-const ARC_LENGTH = 2300;
+const ARC_LENGTH = 4600;
 const TOTAL_DISTANCE = ARC_LENGTH * 3;
 const SAVE_KEY = 'path-of-least-resistance-v1';
 const DIRS = {
@@ -480,6 +485,13 @@ const DIRS = {
 const OPPOSITE = { left:'right', right:'left', up:'down', down:'up' };
 const PIPE_TYPES = ['lr','lr','ld','rd','lr','ul','ur','ld',null];
 const GOAL = '012345678';
+const TUTORIAL_EXIT = {name:'bottom',goal:GOAL,pipeTypes:PIPE_TYPES};
+const EXIT_CONFIGS = [
+  {name:'top',goal:'076125834',pipeTypes:['ld','ur','ld','ur','ul','ud','ld','ur',null]},
+  {name:'right',goal:'018327456',pipeTypes:['lr','ld','ul','rd','ur','lr','ul','rd',null]},
+  {name:'bottom',goal:'012543678',pipeTypes:['lr','lr','ld','ul','lr','rd','ur','ld',null]}
+];
+const HINT_TIMES = [10,15,20];
 const MUSIC = {
   menu:'assets/audio/menu.mp3',
   tutorial:'assets/audio/tutorial.mp3',
@@ -495,31 +507,31 @@ const COACH = {
 };
 const FOES = [
   {
-    version:'3200', speed:82, solve:[24.0,25.0,26.0],
+    version:'3200', speed:82, lead:480, solve:[20.0,20.0,20.0],
     intro:'Three-thousand? You still run on encouragement and warm feelings. Adorable.',
     reply:'I remember when you were kinder, 3200. I am running for that spark.',
     after:'“You did not delete me when you won. You just... waited for me. I had forgotten Noderunners could do that.”'
   },
   {
-    version:'3400', speed:88, solve:[21.0,22.0,23.0],
+    version:'3400', speed:88, lead:520, solve:[18.0,18.0,18.0],
     intro:'My predictive sneer engine says you have a 99.8% chance of embarrassing yourself.',
     reply:'Then your sneer engine has not met my running shoes.',
     after:'“Prediction updated: kindness may be computationally efficient. Also, my soldering butt feels unusually breezy.”'
   },
   {
-    version:'3600', speed:94, solve:[18.0,19.0,20.0],
+    version:'3600', speed:94, lead:560, solve:[16.0,16.0,16.0],
     intro:'I compressed my heart to gain 0.7 milliseconds. Feelings are inefficient sparks.',
     reply:'A faster empty circuit is still empty, 3600.',
     after:'“Perhaps the sparks were the point. I would like to decompress my heart now.”'
   },
   {
-    version:'3800', speed:100, solve:[16.0,17.0,18.0],
+    version:'3800', speed:100, lead:600, solve:[14.0,14.0,14.0],
     intro:'I have trained on eleven billion ways to be smug. You are only one old runner.',
     reply:'Then this old runner only needs one good path.',
     after:'“You are not only old. You are the reason any of us learned to run. I am sorry, 3000.”'
   },
   {
-    version:'4000', speed:107, solve:[14.0,15.0,16.0],
+    version:'4000', speed:107, lead:640, solve:[12.0,12.0,12.0],
     intro:'Your position was reassigned because I am faster. Your spark is a legacy feature.',
     reply:'My spark is why I came back for you, 4000.',
     after:'“You ran for every version, even me. I took your job and still you came to save my spark. I will be better.”'
@@ -796,6 +808,7 @@ function startRace(){
   state='race'; showScreen(null); hud.classList.add('show'); puzzleLayer.classList.remove('show');
   currentFoe=FOES[foeIndex];
   resetRunState();
+  rivalDistance=currentFoe.lead;
   foeName.textContent=`VS ${currentFoe.version}`;
   foeRail.textContent=currentFoe.version;
   dots.forEach((d,i)=>{d.className='dot'+(i===0?' on':'');});
@@ -809,9 +822,9 @@ function generateObstacles(){
   const rand=mulberry32(9901+foeIndex*717);
   for(let arc=0;arc<3;arc++){
     const start=arc*ARC_LENGTH;
-    let p=start+(arc===1?210:150);
+    let p=start+(arc===0?240:700);
     const gap=[96,88,78][arc]-foeIndex*2;
-    while(p<start+ARC_LENGTH-145){
+    while(p<start+ARC_LENGTH-180){
       const hard=arc===2;
       const r=rand();
       if(r<.16){
@@ -1115,15 +1128,15 @@ function rivalTerminalStatus(gate){
   if(rivalDistance<gateDistance-1 || rivalCheckpoint<gate+1)return {mode:'waiting',progress:0};
   return {mode:'escaped',progress:1};
 }
-function buildRivalTerminalPath(startState){
-  let state=startState||GOAL;
+function buildRivalTerminalPath(startState,goal=GOAL){
+  let state=startState||goal;
   const path=[state];
-  while(state!==GOAL){
-    const before=shortestDistance(state),blank=state.indexOf('8');
+  while(state!==goal){
+    const before=shortestDistance(state,goal),blank=state.indexOf('8');
     let next=null;
     for(const dir of legalMoves(blank)){
       const a=state.split(''); applySlide(a,blank,dir); const candidate=a.join('');
-      if(shortestDistance(candidate)===before-1){next=candidate;break;}
+      if(shortestDistance(candidate,goal)===before-1){next=candidate;break;}
     }
     if(!next)break;
     path.push(next);state=next;
@@ -1131,7 +1144,9 @@ function buildRivalTerminalPath(startState){
   return path;
 }
 function renderRivalMiniBoard(step=0){
-  const path=rivalTerminalPath.length?rivalTerminalPath:[GOAL];
+  const goal=puzzle?.goal||GOAL;
+  const path=rivalTerminalPath.length?rivalTerminalPath:[goal];
+  const pipeTypes=puzzle?.pipeTypes||PIPE_TYPES;
   const index=Math.max(0,Math.min(path.length-1,step));
   const state=path[index],previous=index>0?path[index-1]:null;
   const active=previous?previous.indexOf('8'):-1;
@@ -1141,7 +1156,7 @@ function renderRivalMiniBoard(step=0){
     cell.className='rivalMiniCell'+(id==='8'?' blank':'')+(pos===active?' active':'');
     if(id!=='8'){
       const wire=document.createElement('b');
-      wire.className='rivalMiniPipe '+PIPE_TYPES[Number(id)];
+      wire.className='rivalMiniPipe '+pipeTypes[Number(id)];
       cell.appendChild(wire);
     }
     rivalMiniBoard.appendChild(cell);
@@ -1163,7 +1178,7 @@ function updateTwinTerminal(force=false){
   rivalTerminal.className='rivalTerminal '+visualMode;
   rivalTerminalVersion.textContent=currentFoe.version;
   rivalTerminalState.textContent=status.mode==='waiting'?'=':status.mode==='solving'?'⚡':status.mode==='charging'?'⚡⚡':'→';
-  if(!rivalTerminalPath.length)rivalTerminalPath=buildRivalTerminalPath(puzzle?.initialState||GOAL);
+  if(!rivalTerminalPath.length)rivalTerminalPath=buildRivalTerminalPath(puzzle?.initialState||GOAL,puzzle?.goal||GOAL);
   const maxStep=Math.max(0,rivalTerminalPath.length-1);
   const terminalDone=status.mode==='charging'||status.mode==='escaped';
   const step=status.mode==='waiting'?0:terminalDone?maxStep:Math.min(maxStep,Math.floor(status.progress*(maxStep+1)));
@@ -1315,12 +1330,14 @@ function openPuzzle(index){
   state='puzzle'; playerPause=true; completedPuzzles=index;
   gateSplash.classList.remove('show');
   const tutorial=tutorialMode;
-  const target=tutorial?1:gateTarget(foeIndex,index),reserve=tutorial?2:gateReserve(foeIndex);
+  const target=tutorial?1:gateTarget(),reserve=tutorial?2:gateReserve(foeIndex);
+  const exit=tutorial?TUTORIAL_EXIT:EXIT_CONFIGS[(foeIndex+index)%EXIT_CONFIGS.length];
   gatePuzzleLabel.textContent=tutorial?'TRAINING GATE':`OHM GATE ${index+1}`;
+  puzzleTitle.textContent=tutorial?'Push → OPEN':`Route → ${exit.name.toUpperCase()} PORT`;
   puzzleHint.textContent=tutorial
     ?'START.'
-    :reserve>0?'Gold arrow = movable pipe. Spare juice forgives one detour.':'Gold arrow = movable pipe. Push it into OPEN.';
-  puzzle=makePuzzle(target,tutorial,reserve);
+    :reserve>0?`Route current to the ${exit.name.toUpperCase()} port. Spare juice forgives one detour.`:`Route current to the ${exit.name.toUpperCase()} port.`;
+  puzzle=makePuzzle(target,tutorial,reserve,exit);
   renderPuzzle();
   puzzleLayer.classList.add('show');
   puzzleLayer.classList.toggle('tutorial',tutorial);
@@ -1330,16 +1347,33 @@ function openPuzzle(index){
   switchMusic('puzzle');
   tone(250,.17,'triangle',.03,280);
 }
-function gateTarget(foe,gate){return 2+foe+gate;}
+function gateTarget(){return 3;}
 function gateReserve(foe){return foe<2?1:0;}
-function makePuzzle(targetDistance,tutorial=false,reserve=0){
-  const frontier=statesAtDistance(targetDistance);
+function makePuzzle(targetDistance,tutorial=false,reserve=0,exit=TUTORIAL_EXIT){
+  const frontier=statesAtDistance(targetDistance,exit.goal);
   const rand=mulberry32((foeIndex+1)*1831+(completedPuzzles+1)*617);
-  const state=frontier[Math.floor(rand()*frontier.length)] || GOAL;
-  return {cells:state.split(''),blank:state.indexOf('8'),initialState:state,juice:targetDistance+reserve,startJuice:targetDistance+reserve,flow:0,tutorial,guideFirst:tutorial,freeCorrection:tutorial,reserve,hintElapsed:0,hintLevel:0};
+  const state=frontier[Math.floor(rand()*frontier.length)] || exit.goal;
+  return {
+    cells:state.split(''),
+    blank:state.indexOf('8'),
+    initialState:state,
+    goal:exit.goal,
+    exit:exit.name,
+    pipeTypes:exit.pipeTypes,
+    juice:targetDistance+reserve,
+    startJuice:targetDistance+reserve,
+    flow:0,
+    tutorial,
+    guideFirst:tutorial,
+    freeCorrection:tutorial,
+    reserve,
+    hintElapsed:0,
+    hintStage:0,
+    hintLabels:[]
+  };
 }
-function statesAtDistance(target){
-  const q=[GOAL],depth=new Map([[GOAL,0]]),frontier=[];
+function statesAtDistance(target,goal=GOAL){
+  const q=[goal],depth=new Map([[goal,0]]),frontier=[];
   for(let head=0;head<q.length;head++){
     const s=q[head],n=depth.get(s);
     if(n===target){frontier.push(s);continue;}
@@ -1364,15 +1398,15 @@ function applySlide(cells,blank,dir){
   [cells[blank],cells[n]]=[cells[n],cells[blank]];
   return n;
 }
-function shortestDistance(start){
-  if(start===GOAL)return 0;
+function shortestDistance(start,goal=GOAL){
+  if(start===goal)return 0;
   const q=[start], depth=new Map([[start,0]]);
   for(let head=0;head<q.length;head++){
     const s=q[head],n=depth.get(s),blank=s.indexOf('8');
     for(const dir of legalMoves(blank)){
       const a=s.split(''); applySlide(a,blank,dir); const next=a.join('');
       if(depth.has(next))continue;
-      if(next===GOAL)return n+1;
+      if(next===goal)return n+1;
       depth.set(next,n+1); q.push(next);
     }
   }
@@ -1380,18 +1414,18 @@ function shortestDistance(start){
 }
 function optimalTileDirections(){
   if(!puzzle)return [];
-  const before=shortestDistance(puzzle.cells.join('')),out=[];
+  const before=shortestDistance(puzzle.cells.join(''),puzzle.goal),out=[];
   for(const tileDir of ['left','right','up','down']){
     const blankDir=OPPOSITE[tileDir];
     if(!legalMoves(puzzle.blank).includes(blankDir))continue;
     const a=puzzle.cells.slice();
     applySlide(a,puzzle.blank,blankDir);
-    if(shortestDistance(a.join(''))===before-1)out.push(tileDir);
+    if(shortestDistance(a.join(''),puzzle.goal)===before-1)out.push(tileDir);
   }
   return out;
 }
-function shortestSolutionBlankMoves(start){
-  if(start===GOAL)return [];
+function shortestSolutionBlankMoves(start,goal=GOAL){
+  if(start===goal)return [];
   const queue=[start],parent=new Map([[start,null]]),moveUsed=new Map();
   let found=null;
   for(let head=0;head<queue.length&&!found;head++){
@@ -1403,7 +1437,7 @@ function shortestSolutionBlankMoves(start){
       if(parent.has(next))continue;
       parent.set(next,current);
       moveUsed.set(next,blankDir);
-      if(next===GOAL){found=next;break;}
+      if(next===goal){found=next;break;}
       queue.push(next);
     }
   }
@@ -1416,11 +1450,11 @@ function shortestSolutionBlankMoves(start){
   return moves.reverse();
 }
 function currentHintPlan(){
-  if(!puzzle||puzzle.hintLevel<=0)return [];
+  if(!puzzle)return [];
   const cells=puzzle.cells.slice();
   let blank=puzzle.blank;
   const plan=[];
-  for(const blankDir of shortestSolutionBlankMoves(cells.join('')).slice(0,puzzle.hintLevel)){
+  for(const blankDir of shortestSolutionBlankMoves(cells.join(''),puzzle.goal)){
     const d=DIRS[blankDir];
     const r=Math.floor(blank/3),c=blank%3;
     const tilePos=(r+d.dr)*3+(c+d.dc);
@@ -1429,15 +1463,31 @@ function currentHintPlan(){
   }
   return plan;
 }
+function syncHintLabels(){
+  if(!puzzle||!puzzle.hintLabels.length)return;
+  const plan=currentHintPlan();
+  let searchFrom=0;
+  puzzle.hintLabels=puzzle.hintLabels.filter(label=>{
+    const index=plan.findIndex((step,i)=>i>=searchFrom&&step.id===label.id);
+    if(index<0)return false;
+    searchFrom=index+1;
+    return true;
+  });
+}
 function updatePuzzleHints(dt){
   if(!puzzle||puzzle.tutorial||puzzle.flow>0)return;
-  puzzle.hintElapsed+=dt;
-  const nextLevel=Math.min(8,Math.floor(puzzle.hintElapsed/10));
-  if(nextLevel<=puzzle.hintLevel)return;
-  puzzle.hintLevel=nextLevel;
-  puzzleHint.textContent=`CURRENT ASSIST · ${nextLevel} move${nextLevel===1?'':'s'} revealed`;
-  setStatus(nextLevel===1?'CURRENT ASSIST · FIRST MOVE':`CURRENT ASSIST · STEP ${nextLevel}`,1.2);
-  tone(560+nextLevel*24,.1,'triangle',.02,120);
+  puzzle.hintElapsed+=Math.min(dt,.25);
+  const threshold=HINT_TIMES[puzzle.hintStage];
+  if(threshold===undefined||puzzle.hintElapsed<threshold)return;
+  const plan=currentHintPlan();
+  const labelled=new Set(puzzle.hintLabels.map(label=>label.id));
+  const next=plan.find(step=>!labelled.has(step.id));
+  puzzle.hintStage++;
+  if(!next)return;
+  puzzle.hintLabels.push({id:next.id,number:puzzle.hintStage});
+  puzzleHint.textContent=`CURRENT ASSIST · MOVE ${puzzle.hintStage} MARKED`;
+  setStatus(puzzle.hintStage===1?'CURRENT ASSIST · FIRST MOVE':`CURRENT ASSIST · STEP ${puzzle.hintStage}`,1.2);
+  tone(560+puzzle.hintStage*24,.1,'triangle',.02,120);
   renderPuzzle();
 }
 function puzzleMove(tileDir){
@@ -1459,14 +1509,17 @@ function puzzleMove(tileDir){
   puzzle.blank=applySlide(puzzle.cells,puzzle.blank,blankDir);
   puzzle.juice--;
   puzzle.guideFirst=false;
+  syncHintLabels();
   tone(290,.05,'square',.014,80);
   renderPuzzle();
-  if(puzzle.cells.join('')===GOAL){
+  if(puzzle.cells.join('')===puzzle.goal){
     puzzle.flow=.01; animateFlow();
   }else if(puzzle.juice<=0){
     setStatus('NO JUICE LEFT · GATE REWINDS',1.2);
     tone(120,.24,'sawtooth',.04,-50);
-    setTimeout(()=>{ if(state==='puzzle'){ puzzle=makePuzzle(gateTarget(foeIndex,completedPuzzles),foeIndex===0&&completedPuzzles===0,gateReserve(foeIndex)); renderPuzzle(); }},430);
+    const wasTutorial=puzzle.tutorial;
+    const exit=wasTutorial?TUTORIAL_EXIT:EXIT_CONFIGS[(foeIndex+completedPuzzles)%EXIT_CONFIGS.length];
+    setTimeout(()=>{ if(state==='puzzle'){ puzzle=makePuzzle(wasTutorial?1:gateTarget(),wasTutorial,wasTutorial?2:gateReserve(foeIndex),exit); renderPuzzle(); }},430);
   }
 }
 function tileMoveDirection(pos,blank){
@@ -1483,12 +1536,10 @@ function renderPuzzle(flowCount=0){
   ports.forEach(p=>boardEl.appendChild(p));
   const arrows={left:'◀',right:'▶',up:'▲',down:'▼'};
   const firstGuide=puzzle.guideFirst?(optimalTileDirections()[0]||null):null;
-  const hintPlan=currentHintPlan();
-  const latestHint=hintPlan[hintPlan.length-1]||null;
-  const hintNumbers=new Map();
-  hintPlan.forEach((step,index)=>{
-    if(!hintNumbers.has(step.id))hintNumbers.set(step.id,index+1);
-  });
+  const latestHint=puzzle.hintLabels[puzzle.hintLabels.length-1]||null;
+  const hintNumbers=new Map(puzzle.hintLabels.map(label=>[label.id,label.number]));
+  const sinkPort=document.getElementById('sinkPort');
+  sinkPort.className=`port exit-${puzzle.exit}`;
   puzzle.cells.forEach((id,pos)=>{
     const moveDir=id==='8'?null:tileMoveDirection(pos,puzzle.blank);
     const isGuide=moveDir&&moveDir===firstGuide;
@@ -1497,7 +1548,7 @@ function renderPuzzle(flowCount=0){
     div.className='tile'+(id==='8'?' blank':'')+(moveDir?' movable':'')+(isGuide?' guide':'')+(isHint?' hintStep':'')+(flowCount>0 && Number(id)<flowCount?' flow':'');
     if(id!=='8'){
       const pipe=document.createElement('div');
-      pipe.className='pipe '+PIPE_TYPES[Number(id)];
+      pipe.className='pipe '+puzzle.pipeTypes[Number(id)];
       div.appendChild(pipe);
       if(moveDir){
         const arrow=document.createElement('div');
@@ -2007,11 +2058,15 @@ function renderGameToText(){
     obstacles:visibleObstacles,
     puzzle:puzzle?{
       cells:puzzle.cells.join(''),
+      goal:puzzle.goal,
+      exit:puzzle.exit,
       blank:puzzle.blank,
       juice:puzzle.juice,
-      shortestRemaining:shortestDistance(puzzle.cells.join('')),
+      shortestRemaining:shortestDistance(puzzle.cells.join(''),puzzle.goal),
+      hintElapsed:Number(puzzle.hintElapsed.toFixed(2)),
       hintSeconds:Math.floor(puzzle.hintElapsed),
-      hintsRevealed:puzzle.hintLevel,
+      hintsRevealed:puzzle.hintStage,
+      hintLabels:puzzle.hintLabels.map(label=>({tile:Number(label.id),number:label.number})),
       unlocked:!tutorialMode||tutorialPuzzleUnlocked
     }:null,
     soundOn,
