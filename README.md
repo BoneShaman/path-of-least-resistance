@@ -20,7 +20,7 @@ The complete campaign faces Noderunners `3200`, `3400`, `3600`, `3800`, and `400
 
 ## Play
 
-Open the playable GitHub Pages build from the repository website link.
+**[Play The Path of Least Resistance](https://boneshaman.github.io/path-of-least-resistance/)**
 
 The game also runs locally without a build step:
 
