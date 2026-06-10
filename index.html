@@ -540,6 +540,8 @@ const FOES = [
 
 let W=0,H=0,DPR=1;
 let last=performance.now();
+let frameTimeEma=16.67;
+let slowFrameCount=0;
 let state='title';
 let crawlTimer=0;
 let dialogueTimer=0;
@@ -609,8 +611,10 @@ let flash=0;
 let shake=0;
 let statusTimer=0;
 let obstacles=[];
+let playerObstacleCursor=0;
 let particles=[];
 let bgSparks=[];
+let backgroundGradient=null;
 let puzzle=null;
 let gateIntroTimer=0;
 let currentGate=0;
@@ -620,6 +624,7 @@ let soundOn=true;
 let audio=null;
 let activeMusic=null;
 let activeMusicKey='';
+const musicTracks={};
 let best = loadSave();
 
 function loadSave(){
@@ -635,6 +640,10 @@ function resize(){
   W=innerWidth; H=innerHeight;
   canvas.width=Math.floor(W*DPR); canvas.height=Math.floor(H*DPR);
   ctx.setTransform(DPR,0,0,DPR,0,0);
+  backgroundGradient=ctx.createRadialGradient(W*.5,H*.45,40,W*.5,H*.45,Math.max(W,H)*.76);
+  backgroundGradient.addColorStop(0,'#103253');
+  backgroundGradient.addColorStop(.45,'#07152b');
+  backgroundGradient.addColorStop(1,'#02050d');
   seedBackground();
 }
 addEventListener('resize',resize,{passive:true});
@@ -655,10 +664,13 @@ function switchMusic(key){
   if(activeMusicKey===key && activeMusic)return;
   if(activeMusic){activeMusic.pause();activeMusic.currentTime=0;}
   activeMusicKey=key;
-  activeMusic=new Audio(MUSIC[key]);
-  activeMusic.loop=true;
-  activeMusic.preload='auto';
-  activeMusic.volume=.26;
+  activeMusic=musicTracks[key];
+  if(!activeMusic){
+    activeMusic=musicTracks[key]=new Audio(MUSIC[key]);
+    activeMusic.loop=true;
+    activeMusic.preload='auto';
+    activeMusic.volume=.26;
+  }
   if(soundOn)activeMusic.play().catch(()=>{});
 }
 function tone(freq=440,dur=.08,type='sine',gain=.035,slide=0){
@@ -671,6 +683,7 @@ function tone(freq=440,dur=.08,type='sine',gain=.035,slide=0){
   g.gain.setValueAtTime(gain,audio.currentTime);
   g.gain.exponentialRampToValueAtTime(.0001,audio.currentTime+dur);
   o.connect(g); g.connect(audio.destination); o.start(); o.stop(audio.currentTime+dur);
+  o.onended=()=>{o.disconnect();g.disconnect();};
 }
 function chord(){
   [180,260,390].forEach((f,i)=>setTimeout(()=>tone(f,.24,'triangle',.028,170),i*48));
@@ -819,6 +832,7 @@ function startRace(){
 }
 function generateObstacles(){
   obstacles=[];
+  playerObstacleCursor=0;
   const rand=mulberry32(9901+foeIndex*717);
   for(let arc=0;arc<3;arc++){
     const start=arc*ARC_LENGTH;
@@ -851,12 +865,14 @@ function spawnTutorialBarrier(type,ahead=240){
   tutorialGroup++;
   tutorialBarrierAt=distance+ahead;
   obstacles=obstacles.filter(o=>!o.tutorial);
+  playerObstacleCursor=0;
   for(let l=0;l<3;l++)obstacles.push({d:tutorialBarrierAt,l,type,hit:false,cleared:false,tutorial:true,group:tutorialGroup});
 }
 function spawnTutorialSpark(ahead=190){
   tutorialGroup++;
   tutorialBarrierAt=distance+ahead;
   obstacles=obstacles.filter(o=>!o.tutorial);
+  playerObstacleCursor=0;
   for(let l=0;l<3;l++)obstacles.push({d:tutorialBarrierAt,l,type:'spark',hit:false,cleared:false,tutorial:true,group:tutorialGroup});
 }
 function finishTutorialAction(kind,group){
@@ -925,7 +941,7 @@ function update(dt){
   if(state==='puzzle'){
     updatePuzzleHints(dt);
     if(tutorialMode)updateCoachTerminal(dt);
-    else { updateRival(dt); updateTwinTerminal(); }
+    else { updateRival(dt); updateHud(); updateTwinTerminal(); }
   }
   sparkHitCooldown=Math.max(0,sparkHitCooldown-dt);
   const pressureTarget=state==='race'&&!tutorialMode?Math.max(0,1-Math.abs(rivalDistance-distance)/250):0;
@@ -1036,17 +1052,29 @@ function updateCollapse(dt){
   if(tutorialMode){startTutorial();return;}
   finishRace(false,'spark');
 }
+function firstObstacleAt(minDistance){
+  let low=0,high=obstacles.length;
+  while(low<high){
+    const mid=(low+high)>>1;
+    if(obstacles[mid].d<minDistance)low=mid+1;
+    else high=mid;
+  }
+  return low;
+}
 function chooseRivalLane(){
+  const nearest=[999,999,999];
+  let unresolved=3;
+  for(let i=firstObstacleAt(rivalDistance+26);i<obstacles.length&&unresolved>0;i++){
+    const o=obstacles[i];
+    if(o.d-rivalDistance>=999)break;
+    if(o.hit||nearest[o.l]!==999)continue;
+    nearest[o.l]=o.d-rivalDistance;
+    unresolved--;
+  }
   let bestLane=rivalLane, bestScore=-Infinity;
   for(let l=0;l<3;l++){
-    let nearest=999;
-    for(const o of obstacles){
-      const rel=o.d-rivalDistance;
-      if(o.hit||o.l!==l||rel<26)continue;
-      if(rel<nearest)nearest=rel;
-    }
     const laneBias=(l===1?.8:0)+(l===rivalLane?.3:0);
-    const score=nearest+laneBias;
+    const score=nearest[l]+laneBias;
     if(score>bestScore){bestScore=score;bestLane=l;}
   }
   return bestLane;
@@ -1061,9 +1089,11 @@ function updateRivalBody(dt){
   rivalLane=chooseRivalLane();
   rivalLaneFloat += (rivalLane-rivalLaneFloat)*Math.min(1,dt*10);
   let threat=null,threatRel=Infinity;
-  for(const o of obstacles){
+  for(let i=firstObstacleAt(rivalDistance+20);i<obstacles.length;i++){
+    const o=obstacles[i];
     const rel=o.d-rivalDistance;
-    if(o.hit||o.l!==Math.round(rivalLaneFloat)||rel<20||rel>72)continue;
+    if(rel>72)break;
+    if(o.hit||o.l!==Math.round(rivalLaneFloat))continue;
     if(rel<threatRel){threat=o;threatRel=rel;}
   }
   if(!threat)return;
@@ -1101,21 +1131,23 @@ function updateRival(dt){
   }
   updateRivalBody(dt);
   if(rivalHasEscaped() && state==='race' && completedPuzzles>=3) finishRace(false);
-  updateHud();
 }
+function setClassName(el,value){if(el.className!==value)el.className=value;}
+function setText(el,value){if(el.textContent!==value)el.textContent=value;}
+function setWidth(el,value){if(el.style.width!==value)el.style.width=value;}
 function updateHud(){
   const playerRatio=tutorialMode&&Number.isFinite(tutorialGateDistance)?Math.min(1,distance/tutorialGateDistance):Math.min(1,distance/TOTAL_DISTANCE);
-  playerFill.style.width=`${playerRatio*100}%`;
-  rivalFill.style.width=tutorialMode?'0%':`${Math.min(100,rivalDistance/TOTAL_DISTANCE*100)}%`;
-  dots.forEach((d,i)=>{d.className='dot'+(tutorialMode?(i===0?' on':''):(i<completedPuzzles?' done':i===currentArc?' on':''));});
-  playerFill.className=boost>0?'surge':'';
-  rivalFill.className=!tutorialMode&&rivalBoost>0?'surge':'';
-  rivalRail.className=!tutorialMode&&pressureVisual>.48?'pressure':'';
-  sparkState.textContent=sparkHeart<=0?'✕':dizzy>0?'⚡':boost>0?'⚡ ⚡ ⚡':'⚡';
-  sparkHeartEls.forEach((el,i)=>el.className=i<sparkHeart?'on':'off');
-  flowChainEl.classList.toggle('show',state==='race' && !tutorialMode);
-  flowValueEl.textContent=flowChain>=2?`CHAIN ×${Math.floor(flowChain)}`:'READY';
-  flowMeterFill.style.width=`${Math.min(100,flowWindow/2.8*100)}%`;
+  setWidth(playerFill,`${(playerRatio*100).toFixed(3)}%`);
+  setWidth(rivalFill,tutorialMode?'0%':`${Math.min(100,rivalDistance/TOTAL_DISTANCE*100).toFixed(3)}%`);
+  dots.forEach((d,i)=>setClassName(d,'dot'+(tutorialMode?(i===0?' on':''):(i<completedPuzzles?' done':i===currentArc?' on':''))));
+  setClassName(playerFill,boost>0?'surge':'');
+  setClassName(rivalFill,!tutorialMode&&rivalBoost>0?'surge':'');
+  setClassName(rivalRail,!tutorialMode&&pressureVisual>.48?'pressure':'');
+  setText(sparkState,sparkHeart<=0?'✕':dizzy>0?'⚡':boost>0?'⚡ ⚡ ⚡':'⚡');
+  sparkHeartEls.forEach((el,i)=>setClassName(el,i<sparkHeart?'on':'off'));
+  setClassName(flowChainEl,state==='race'&&!tutorialMode?'show':'');
+  setText(flowValueEl,flowChain>=2?`CHAIN ×${Math.floor(flowChain)}`:'READY');
+  setWidth(flowMeterFill,`${Math.min(100,flowWindow/2.8*100).toFixed(3)}%`);
 }
 function rivalTerminalStatus(gate){
   const gateDistance=(gate+1)*ARC_LENGTH;
@@ -1237,8 +1269,9 @@ function healSpark(){
   if(sparkHeart<3){sparkHeart++;tone(720,.14,'triangle',.025,270);}
 }
 function rewardPassedBlocks(){
-  for(const o of obstacles){
-    if(o.cleared || o.d>=distance-3)continue;
+  while(playerObstacleCursor<obstacles.length&&obstacles[playerObstacleCursor].d<distance-3){
+    const o=obstacles[playerObstacleCursor++];
+    if(o.cleared)continue;
     o.cleared=true;
     if(!o.hit && o.type==='block' && Math.abs(o.l-lane)===1){
       buildFlow(.5,.28);
@@ -1248,8 +1281,10 @@ function rewardPassedBlocks(){
   }
 }
 function collide(){
-  for(const o of obstacles){
-    if(o.hit || Math.abs(o.d-distance)>12 || o.l!==lane) continue;
+  for(let i=firstObstacleAt(distance-12);i<obstacles.length;i++){
+    const o=obstacles[i];
+    if(o.d>distance+12)break;
+    if(o.hit||o.l!==lane)continue;
     o.hit=true;
     if(o.type==='spark'){
       healSpark(); buildFlow(1.5,.9); triggerSurge(1.18,1.42);
@@ -1283,7 +1318,7 @@ function enterOhmGate(index){
   tone(185,.22,'sawtooth',.035,360);
 }
 function updateGateIntro(dt){
-  if(!tutorialMode)updateRival(dt);
+  if(!tutorialMode){updateRival(dt);updateHud();}
   gateIntroTimer-=dt;
   if(gateIntroTimer<=0) openPuzzle(currentGate);
 }
@@ -1650,20 +1685,24 @@ function burst(x,y,kind='cyan',count=16){
   for(let i=0;i<count;i++)particles.push({x,y,vx:(Math.random()-.5)*180,vy:(Math.random()-.7)*180,life:.5+Math.random()*.55,color,size:1.5+Math.random()*3});
 }
 function updateParticles(dt){
-  for(const p of particles){
+  let write=0;
+  for(let i=0;i<particles.length;i++){
+    const p=particles[i];
     p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=120*dt;p.life-=dt;
     if(p.drag){p.vx*=p.drag;p.vy*=p.drag;}
+    if(p.life>0)particles[write++]=p;
   }
-  particles=particles.filter(p=>p.life>0);
+  particles.length=write;
 }
 
-function draw(){
+function draw(now=performance.now()){
+  const t=now/1000;
   ctx.save();
   if(shake>0)ctx.translate((Math.random()-.5)*shake,(Math.random()-.5)*shake);
-  drawBackground();
-  if((state==='race'||state==='dialogue') && boostVisual>.04)drawSpeedLines();
-  if(state==='race'||state==='dialogue'||state==='collapse'||state==='gateIntro'||state==='puzzle')drawTrack();
-  if((state==='race'||state==='dialogue') && pressureVisual>.04)drawPressureAura();
+  drawBackground(t);
+  if((state==='race'||state==='dialogue') && boostVisual>.04)drawSpeedLines(t);
+  if(state==='race'||state==='dialogue'||state==='collapse'||state==='gateIntro'||state==='puzzle')drawTrack(t);
+  if((state==='race'||state==='dialogue') && pressureVisual>.04)drawPressureAura(t);
   drawParticles();
   if(flash>0){
     ctx.fillStyle=`rgba(${dizzy>0?'255,80,120':'255,225,105'},${flash*.22})`;
@@ -1671,11 +1710,8 @@ function draw(){
   }
   ctx.restore();
 }
-function drawBackground(){
-  const g=ctx.createRadialGradient(W*.5,H*.45,40,W*.5,H*.45,Math.max(W,H)*.76);
-  g.addColorStop(0,'#103253');g.addColorStop(.45,'#07152b');g.addColorStop(1,'#02050d');
-  ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
-  const t=performance.now()/1000;
+function drawBackground(t){
+  ctx.fillStyle=backgroundGradient;ctx.fillRect(0,0,W,H);
   for(const s of bgSparks){
     const a=.18+.36*(.5+.5*Math.sin(t*1.8+s.tw));
     ctx.fillStyle=`rgba(139,246,255,${a})`;
@@ -1685,8 +1721,8 @@ function drawBackground(){
   const off=(t*(24+boostVisual*82))%42;
   for(let y=-42+off;y<H+42;y+=42){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
 }
-function drawSpeedLines(){
-  const reverse=currentArc===1,t=performance.now()/1000;
+function drawSpeedLines(t){
+  const reverse=currentArc===1;
   const vanishY=H*.12,originY=H*.72;
   ctx.save();ctx.lineCap='round';
   for(let i=0;i<26;i++){
@@ -1703,8 +1739,8 @@ function drawSpeedLines(){
   }
   ctx.restore();
 }
-function drawPressureAura(){
-  const intensity=pressureVisual*(.55+.2*Math.sin(performance.now()/95));
+function drawPressureAura(t){
+  const intensity=pressureVisual*(.55+.2*Math.sin(t*1000/95));
   ctx.save();
   const left=ctx.createLinearGradient(0,0,W*.26,0);
   left.addColorStop(0,`rgba(255,72,120,${.17*intensity})`);left.addColorStop(1,'rgba(255,72,120,0)');
@@ -1714,11 +1750,10 @@ function drawPressureAura(){
   ctx.fillStyle=right;ctx.fillRect(W*.7,0,W*.3,H);
   ctx.restore();
 }
-function drawTrack(){
+function drawTrack(t){
   const reverse=currentArc===1;
   const anchorY=H*.72;
   const vanY=H*.12;
-  const t=performance.now()/1000;
   ctx.save();
   ctx.lineCap='round';
   for(let l=0;l<3;l++){
@@ -1742,9 +1777,11 @@ function drawTrack(){
   if(reverse)drawReverseFlowCues(anchorY,vanY,t);
   if(tutorialMode && Number.isFinite(tutorialGateDistance))drawOhmGate(tutorialGateDistance-distance,anchorY,vanY,reverse,t,1);
   else if(completedPuzzles<3) drawOhmGate((completedPuzzles+1)*ARC_LENGTH-distance,anchorY,vanY,reverse,t,completedPuzzles+1);
-  for(const o of obstacles){
+  for(let i=firstObstacleAt(distance+2);i<obstacles.length;i++){
+    const o=obstacles[i];
     const rel=o.d-distance;
-    if(rel<=2||rel>350||o.hit)continue;
+    if(rel>350)break;
+    if(o.hit)continue;
     const z=Math.max(0,Math.min(1,rel/350));
     const y=lerp(anchorY,vanY,z);
     const x=laneX(o.l,z,reverse);
@@ -2029,9 +2066,12 @@ function drawParticles(){
 function lerp(a,b,t){return a+(b-a)*t;}
 
 function renderGameToText(){
-  const visibleObstacles=obstacles
-    .filter(o=>!o.hit&&o.d>=distance-20&&o.d<=distance+350)
-    .map(o=>({ahead:Math.round(o.d-distance),lane:o.l,type:o.type}));
+  const visibleObstacles=[];
+  for(let i=firstObstacleAt(distance-20);i<obstacles.length;i++){
+    const o=obstacles[i];
+    if(o.d>distance+350)break;
+    if(!o.hit)visibleObstacles.push({ahead:Math.round(o.d-distance),lane:o.l,type:o.type});
+  }
   return JSON.stringify({
     coordinateSystem:'runner lanes are 0 left, 1 center, 2 right; ahead is positive distance',
     mode:state,
@@ -2069,6 +2109,11 @@ function renderGameToText(){
       hintLabels:puzzle.hintLabels.map(label=>({tile:Number(label.id),number:label.number})),
       unlocked:!tutorialMode||tutorialPuzzleUnlocked
     }:null,
+    performance:{
+      frameMs:Number(frameTimeEma.toFixed(2)),
+      estimatedFps:Math.round(1000/frameTimeEma),
+      slowFrames:slowFrameCount
+    },
     soundOn,
     music:activeMusicKey
   });
@@ -2081,8 +2126,13 @@ window.advanceTime=(ms)=>{
 };
 
 function frame(now){
-  const dt=(now-last)/1000;last=now;
-  update(dt);draw();requestAnimationFrame(frame);
+  const rawFrameMs=now-last;
+  if(rawFrameMs>0&&rawFrameMs<250){
+    frameTimeEma+=(rawFrameMs-frameTimeEma)*.06;
+    if(rawFrameMs>28)slowFrameCount++;
+  }
+  const dt=rawFrameMs/1000;last=now;
+  update(dt);draw(now);requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
 
