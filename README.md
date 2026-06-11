@@ -2,7 +2,7 @@
 
 A heartfelt four-button arcade puzzle-racer about an obsolete mechanical penguin proving that kindness is not a legacy defect.
 
-![Noderunner 3000 direction](assets/concepts/noderunner-3000-penguin-direction.png)
+![Noderunner production lineup](assets/concepts/noderunner-lineup.png)
 
 ## What I Made
 
@@ -16,7 +16,7 @@ Each duel alternates between:
 - Competitive shortest-path sliding puzzles
 - Three race arcs against a physical rival
 
-The complete campaign faces Noderunners `3200`, `3400`, `3600`, `3800`, and `4000`. Winning is not about destroying them. It is about reconnecting the kindness their optimization removed.
+The complete campaign faces Noderunners `3200`, `3600`, and `4000`. Each rival runs three race arcs, for a focused nine-leg campaign. Winning is not about destroying them. It is about reconnecting the kindness their optimization removed.
 
 ## Play
 
@@ -95,7 +95,7 @@ See [DEVELOPMENT_HISTORY.md](DEVELOPMENT_HISTORY.md) for the original concept an
 
 The production direction is storybook electromechanics: worn enamel, porcelain, copper, relay towers, glass current, and an expressive mechanical penguin whose signature move is a sparking belly-slide.
 
-See [ART_DIRECTION.md](ART_DIRECTION.md).
+See [ART_DIRECTION.md](ART_DIRECTION.md) and [ASSET_MANIFEST.md](ASSET_MANIFEST.md).
 
 ## Technical Notes
 

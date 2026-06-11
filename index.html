@@ -68,7 +68,7 @@ button{font:inherit;border:0}
 .crawlBottom{position:absolute;left:0;right:0;bottom:0;height:22%;background:linear-gradient(180deg,rgba(2,7,18,0),rgba(2,7,18,.98));pointer-events:none;z-index:3}
 .crawlViewport{position:absolute;inset:0;display:flex;align-items:flex-end;justify-content:center;padding:22px 16px 90px;perspective:420px;overflow:hidden}
 .crawlText{width:min(720px,92%);color:var(--gold);text-shadow:0 0 10px rgba(255,224,109,.14);transform-origin:50% 100%;transform:rotateX(25deg) translateY(74%);font-weight:850;letter-spacing:.015em;line-height:1.58;text-align:justify}
-#crawl.play .crawlText{animation:storyCrawl 32s linear forwards}
+#crawl.play .crawlText{animation:storyCrawl var(--crawl-duration,52s) linear forwards}
 .crawlIntro{margin-bottom:18px;font-size:clamp(24px,5vw,40px);font-weight:1000;letter-spacing:.22em;text-align:center}
 .crawlChapter{margin-bottom:10px;font-size:clamp(14px,2.7vw,20px);font-weight:900;letter-spacing:.24em;text-align:center}
 .crawlTitle{margin-bottom:22px;font-size:clamp(30px,6vw,56px);line-height:1;letter-spacing:-.05em;text-align:center}
@@ -315,7 +315,7 @@ button{font:inherit;border:0}
 
   <section id="briefing" class="screen">
     <div class="card">
-      <div class="kicker" id="briefKicker">Wire duel 01 / 05</div>
+      <div class="kicker" id="briefKicker">Wire duel 01 / 03</div>
       <h2 id="briefTitle">Noderunner 3200</h2>
       <div class="story roundTalk" id="briefStory"></div>
       <button id="briefBtn" class="primary">Run the wire</button>
@@ -471,8 +471,10 @@ const flowChainEl = document.getElementById('flowChain');
 const flowValueEl = document.getElementById('flowValue');
 const flowMeterFill = document.getElementById('flowMeterFill');
 const dots = [...document.querySelectorAll('.dot')];
+const crawlText = document.getElementById('crawlText');
 
 const TAU = Math.PI * 2;
+const CRAWL_DURATION_SECONDS = 52;
 const ARC_LENGTH = 4600;
 const TOTAL_DISTANCE = ARC_LENGTH * 3;
 const SAVE_KEY = 'path-of-least-resistance-v1';
@@ -499,6 +501,17 @@ const MUSIC = {
   puzzle:'assets/audio/puzzle.mp3',
   between:'assets/audio/between-rounds.mp3'
 };
+function loadSprite(src){
+  const image=new Image();
+  image.decoding='async';
+  image.src=src;
+  return image;
+}
+const SPRITES = {
+  hero:loadSprite('assets/sprites/runtime/noderunner-3000-actions.png'),
+  coach:loadSprite('assets/sprites/runtime/noderunner-1000-actions.png'),
+  rivals:loadSprite('assets/sprites/runtime/rivals-run.png')
+};
 const COACH = {
   version:'1000',
   intro:'Stay close. Keep your spark lit.',
@@ -513,22 +526,10 @@ const FOES = [
     after:'“You did not delete me when you won. You just... waited for me. I had forgotten Noderunners could do that.”'
   },
   {
-    version:'3400', speed:88, lead:520, solve:[18.0,18.0,18.0],
-    intro:'My predictive sneer engine says you have a 99.8% chance of embarrassing yourself.',
-    reply:'Then your sneer engine has not met my running shoes.',
-    after:'“Prediction updated: kindness may be computationally efficient. Also, my soldering butt feels unusually breezy.”'
-  },
-  {
     version:'3600', speed:94, lead:560, solve:[16.0,16.0,16.0],
     intro:'I compressed my heart to gain 0.7 milliseconds. Feelings are inefficient sparks.',
     reply:'A faster empty circuit is still empty, 3600.',
     after:'“Perhaps the sparks were the point. I would like to decompress my heart now.”'
-  },
-  {
-    version:'3800', speed:100, lead:600, solve:[14.0,14.0,14.0],
-    intro:'I have trained on eleven billion ways to be smug. You are only one old runner.',
-    reply:'Then this old runner only needs one good path.',
-    after:'“You are not only old. You are the reason any of us learned to run. I am sorry, 3000.”'
   },
   {
     version:'4000', speed:107, lead:640, solve:[12.0,12.0,12.0],
@@ -751,8 +752,9 @@ function setStatus(text,dur=1.2){
   statusTimer=dur;
 }
 function showCrawl(){
-  state='crawl'; crawlTimer=32;
+  state='crawl'; crawlTimer=CRAWL_DURATION_SECONDS;
   showScreen(crawl); hud.classList.remove('show'); puzzleLayer.classList.remove('show');
+  crawl.style.setProperty('--crawl-duration',`${CRAWL_DURATION_SECONDS}s`);
   crawl.classList.remove('play'); void crawl.offsetWidth; crawl.classList.add('play');
   switchMusic('menu');
 }
@@ -763,7 +765,7 @@ function finishCrawl(){
 }
 function showTutorialBriefing(){
   briefMode='tutorial'; state='briefing'; showScreen(briefing); hud.classList.remove('show'); puzzleLayer.classList.remove('show');
-  document.getElementById('briefKicker').textContent='ROUND 01 / 06 · TRAINING WIRE';
+  document.getElementById('briefKicker').textContent='ROUND 01 / 04 · TRAINING WIRE';
   document.getElementById('briefTitle').textContent='1000  +  3000';
   renderBriefConversation([
     {role:'mentor',version:'1000',text:COACH.intro},
@@ -775,7 +777,7 @@ function showTutorialBriefing(){
 function showBriefing(){
   briefMode='duel'; state='briefing'; showScreen(briefing); hud.classList.remove('show'); puzzleLayer.classList.remove('show');
   currentFoe=FOES[foeIndex];
-  document.getElementById('briefKicker').textContent=`ROUND ${String(foeIndex+2).padStart(2,'0')} / 06 · WIRE DUEL`;
+  document.getElementById('briefKicker').textContent=`ROUND ${String(foeIndex+2).padStart(2,'0')} / 04 · WIRE DUEL`;
   document.getElementById('briefTitle').textContent=`3000  VS  ${currentFoe.version}`;
   renderBriefConversation([
     {role:'foe',version:currentFoe.version,text:currentFoe.intro},
@@ -786,6 +788,7 @@ function showBriefing(){
 }
 document.getElementById('startBtn').onclick=()=>{ ensureAudio(); tone(170,.22,'sawtooth',.025,430); showCrawl(); };
 document.getElementById('crawlSkip').onclick=()=>{ ensureAudio(); tone(420,.08,'triangle',.024,180); finishCrawl(); };
+crawlText.addEventListener('animationend',()=>finishCrawl());
 document.getElementById('briefBtn').onclick=()=>{ ensureAudio(); briefMode==='tutorial'?startTutorial():startRace(); };
 document.getElementById('resultBtn').onclick=()=>{
   if(tutorialResult){ tutorialResult=false; showBriefing(); return; }
@@ -927,7 +930,6 @@ function update(dt){
   if(statusTimer>0){statusTimer-=dt;if(statusTimer<=0)statusEl.classList.remove('on');}
   if(state==='crawl'){
     crawlTimer-=dt;
-    if(crawlTimer<=0) finishCrawl();
   }
   if(state==='dialogue'){
     dialogueTimer-=dt;
@@ -1664,7 +1666,7 @@ function finishRace(win,reason='race'){
     document.getElementById('resultKicker').textContent='SOLDERING BUTT SUCCESSFULLY SNUFFED';
     document.getElementById('resultTitle').textContent=foeIndex>=FOES.length?'THE SPARKS LIVE ON.':`${foe.version} remembers kindness.`;
     document.getElementById('resultMeta').textContent=foeIndex>=FOES.length
-      ?`All five newer models have remembered the older spark. Final wire time: ${elapsed}s · Peak flow ×${bestFlowChain}.`
+      ?`All three rival models have remembered the older spark. Final wire time: ${elapsed}s · Peak flow ×${bestFlowChain}.`
       :`Wire cleared in ${elapsed}s · Peak flow ×${bestFlowChain}. ${FOES.length-foeIndex} soldering butts remain dangerously unsnuffed.`;
     document.getElementById('resultQuote').textContent=foeIndex>=FOES.length
       ?'Noderunner 4000: “The old model was not inferior. It carried the part none of us should have optimized away. Let us run together.”'
@@ -1905,12 +1907,33 @@ function drawTutorialCue(anchorY,vanY,t){
   ctx.font='1000 31px Inter,system-ui,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(icon,0,0);
   ctx.restore();
 }
+function drawAtlasFrame(image,columns,rows,column,row,x,y,width,height,anchor=.91){
+  if(!image.complete||!image.naturalWidth)return false;
+  const sourceWidth=image.naturalWidth/columns;
+  const sourceHeight=image.naturalHeight/rows;
+  ctx.drawImage(
+    image,
+    column*sourceWidth,row*sourceHeight,sourceWidth,sourceHeight,
+    x-width*.5,y-height*anchor,width,height
+  );
+  return true;
+}
 function drawCoach(anchorY,vanY,reverse,t){
   const rel=state==='collapse'?22:92,z=Math.max(.05,Math.min(.42,rel/350));
   const y=lerp(anchorY,vanY,z),x=laneX(coachLaneFloat,z,reverse),scale=lerp(.98,.62,z);
   drawCoachRunner(x,y,coachJump,coachDuck,t,reverse,scale);
 }
 function drawCoachRunner(x,y,jumpAmt,duckAmt,t,reverse,scale){
+  const spriteDuck=duckAmt>0;
+  const row=spriteDuck||jumpAmt>0?1:0;
+  const column=spriteDuck?3:jumpAmt>0?1:Math.floor(t*10)%4;
+  ctx.save();
+  ctx.shadowBlur=18;ctx.shadowColor='#99ffc2';
+  if(drawAtlasFrame(SPRITES.coach,4,2,column,row,x,y-jumpAmt,148*scale,148*scale)){
+    ctx.restore();
+    return;
+  }
+  ctx.restore();
   ctx.save();ctx.translate(x,y-jumpAmt);ctx.scale(scale,scale);
   const bob=Math.sin(t*12+.8)*3,isDuck=duckAmt>0;
   if(isDuck){ctx.translate(0,18);ctx.rotate(-Math.PI*.42);ctx.scale(1.14,.82);}
@@ -1982,6 +2005,24 @@ function drawRivalShadow(x,y,jumpAmt,duckAmt,scale){
   ctx.restore();
 }
 function drawRivalRunner(x,y,jumpAmt,duckAmt,t,reverse,scale){
+  const spriteDuck=duckAmt>0;
+  ctx.save();
+  ctx.translate(x,y-jumpAmt);
+  if(spriteDuck){ctx.translate(0,16*scale);ctx.rotate(-Math.PI*.42);ctx.scale(1.12,.84);}
+  ctx.shadowBlur=18;ctx.shadowColor='#ff8bad';
+  if(drawAtlasFrame(SPRITES.rivals,4,3,Math.floor(t*11+1.2)%4,foeIndex,0,0,142*scale,142*scale)){
+    ctx.restore();
+    ctx.save();
+    ctx.translate(x,y-jumpAmt);
+    ctx.shadowBlur=10;ctx.shadowColor='rgba(255,107,145,.7)';
+    ctx.fillStyle='rgba(8,18,35,.82)';
+    ctx.beginPath();ctx.roundRect(-16*scale,-66*scale,32*scale,12*scale,8*scale);ctx.fill();
+    ctx.fillStyle='#ffb4c6';ctx.font=`900 ${Math.max(7,9*scale)}px Inter,system-ui,sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(currentFoe.version,0,-60*scale);
+    ctx.restore();
+    return;
+  }
+  ctx.restore();
   ctx.save();ctx.translate(x,y-jumpAmt);
   ctx.scale(scale,scale);
   const bob=Math.sin(t*13+1.2)*3;
@@ -2016,6 +2057,32 @@ function drawRunnerShadow(x,y,jumpAmt,duckAmt){
   ctx.restore();
 }
 function drawRunner(x,y,jumpAmt,duckAmt,t,reverse){
+  const spriteDuck=duckAmt>0;
+  let spriteRow=0,spriteColumn=Math.floor(t*11)%4;
+  if(spriteDuck){spriteRow=1;spriteColumn=3;}
+  else if(jumpAmt>0){spriteRow=1;spriteColumn=jumpAmt>72?1:0;}
+  else if(state==='collapse'||dizzy>0){spriteRow=2;spriteColumn=state==='collapse'?1:0;}
+  ctx.save();
+  ctx.translate(x,y-jumpAmt);
+  if(state==='collapse'){
+    const fall=1-Math.max(0,collapseTimer)/1.35;
+    ctx.translate(0,18*fall);ctx.rotate(Math.PI*.48*fall);
+  }
+  if(spriteDuck&&state==='race'){
+    ctx.fillStyle='rgba(255,224,109,.8)';ctx.shadowBlur=14;ctx.shadowColor='#ffe06d';
+    for(let i=0;i<4;i++){ctx.beginPath();ctx.arc(-27-i*7,20+(i%2)*3,1.5+i*.35,0,TAU);ctx.fill();}
+  }
+  ctx.shadowBlur=18+boostVisual*12;
+  ctx.shadowColor=dizzy>0?'#ff7290':sparkHeart<=1?'#ffb36d':'#8bf6ff';
+  if(drawAtlasFrame(SPRITES.hero,4,3,spriteColumn,spriteRow,0,0,148,148)){
+    if(boostVisual>.08){
+      ctx.strokeStyle=`rgba(255,238,154,${.38+.34*boostVisual})`;ctx.lineWidth=2;ctx.shadowBlur=20;ctx.shadowColor='#8bf6ff';
+      ctx.beginPath();ctx.arc(0,-34,15+Math.sin(t*16)*2+boostVisual*5,0,TAU);ctx.stroke();
+    }
+    ctx.restore();
+    return;
+  }
+  ctx.restore();
   ctx.save();ctx.translate(x,y-jumpAmt);
   if(state==='collapse'){const fall=1-Math.max(0,collapseTimer)/1.35;ctx.translate(0,18*fall);ctx.rotate(Math.PI*.48*fall);}
   const bob=Math.sin(t*13)*3;

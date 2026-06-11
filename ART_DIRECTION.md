@@ -24,6 +24,8 @@ Movement defines the character:
 - Hurt: heart flickers and mechanisms lose coordination
 - Victory: small, sincere physical relief rather than a superhero pose
 
+Gameplay sprites use a strict direct-rear camera. The racers move straight away from the player along the wire; they are not shown at a side or three-quarter angle. The middle arc may reverse the electrical current, but it does not rotate the gameplay camera around the character.
+
 3000 should be cute because of silhouette, motion, and vulnerability. Avoid glossy toy rendering, mascot armor, spikes, horns, cat ears, and generic cyberpunk styling.
 
 ## Successor Models
@@ -31,9 +33,7 @@ Movement defines the character:
 Each successor is recognizably from the same engineering lineage, but progressively optimized:
 
 - `3200`: lightly streamlined and smug
-- `3400`: reduced ornament, sharper timing
 - `3600`: cold precision and minimal wasted movement
-- `3800`: severe weight reduction and exposed performance systems
 - `4000`: immaculate, nearly frictionless, and emotionally sterile
 
 Their construction moves from repaired enamel and brass toward blackened nickel, hard ceramic edges, and diagnostic magenta. After defeat, warmth returns through posture and heart light rather than a complete redesign.
