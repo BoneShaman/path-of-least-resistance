@@ -96,6 +96,12 @@ button{font:inherit;border:0}
 .dot.done{background:var(--gold);border-color:var(--gold);box-shadow:0 0 9px rgba(255,224,109,.6)}
 #status{position:absolute;left:50%;top:calc(91px + env(safe-area-inset-top));transform:translateX(-50%);max-width:min(680px,90vw);padding:8px 13px;border-radius:999px;background:rgba(3,8,18,.62);border:1px solid rgba(139,246,255,.16);font-size:12px;font-weight:800;letter-spacing:.08em;text-align:center;opacity:0;transition:opacity .2s}
 #status.on{opacity:1}
+#reaction{position:absolute;left:50%;top:calc(126px + env(safe-area-inset-top));transform:translate(-50%,-8px);display:grid;grid-template-columns:52px minmax(0,1fr);align-items:center;gap:9px;width:min(430px,88vw);padding:7px 10px 7px 7px;border:1px solid rgba(255,114,144,.32);border-radius:16px;background:linear-gradient(180deg,rgba(31,11,31,.94),rgba(7,12,25,.95));box-shadow:0 14px 42px rgba(0,0,0,.34),0 0 24px rgba(255,114,144,.12);opacity:0;pointer-events:none;transition:opacity .18s ease,transform .18s ease;z-index:24}
+#reaction.on{opacity:1;transform:translate(-50%,0)}
+.reactionPortrait{position:relative;width:52px;height:52px;border-radius:12px;border:1px solid rgba(255,180,198,.35);background-image:linear-gradient(180deg,rgba(4,10,23,.02),rgba(4,10,23,.62)),url("assets/concepts/noderunner-lineup.png");background-size:500% auto;background-position:var(--portrait-x,50%) center}
+.reactionPortrait span{position:absolute;left:4px;right:4px;bottom:3px;padding:2px;border-radius:999px;background:rgba(3,8,18,.74);color:#ffd7e1;font-size:8px;font-weight:1000;letter-spacing:.08em;text-align:center}
+.reactionName{color:#ffd7e1;font-size:10px;font-weight:1000;letter-spacing:.16em;text-transform:uppercase}
+.reactionText{margin-top:3px;color:#fff1f5;font-size:14px;font-weight:850;line-height:1.25}
 #lessonRail{position:absolute;left:50%;top:calc(132px + env(safe-area-inset-top));transform:translateX(-50%);display:none;align-items:center;gap:7px;padding:6px 9px;border-radius:999px;border:1px solid rgba(153,255,194,.2);background:rgba(4,18,24,.68);box-shadow:0 0 18px rgba(153,255,194,.08)}
 #lessonRail.show{display:flex}
 #lessonRail i{display:flex;width:24px;height:24px;align-items:center;justify-content:center;border-radius:50%;border:1px solid rgba(153,255,194,.24);color:rgba(153,255,194,.35);font-size:13px;font-style:normal;font-weight:1000;transition:transform .18s ease,background .18s ease,color .18s ease,box-shadow .18s ease}
@@ -154,6 +160,7 @@ button{font:inherit;border:0}
 #rivalMarker.foe-3600{--portrait-x:75%}
 #rivalMarker.foe-4000{--portrait-x:100%}
 .racerMarker.surge{filter:drop-shadow(0 0 8px #fff2a8) drop-shadow(0 0 13px #8bf6ff);animation:railSurge .22s ease-in-out infinite alternate}
+.racerMarker.rescue{border-color:#ff7290;filter:drop-shadow(0 0 8px #ff7290) drop-shadow(0 0 14px #ffe06d);animation:rescuePulse .28s ease-in-out infinite alternate}
 #rivalRail.pressure .raceTimeline{border-color:rgba(255,114,144,.5);box-shadow:0 0 16px rgba(255,114,144,.2)}
 #flowChain{position:absolute;left:50%;bottom:calc(110px + env(safe-area-inset-bottom));transform:translateX(-50%);display:none;min-width:148px;padding:7px 10px;border:1px solid rgba(255,224,109,.26);border-radius:13px;background:rgba(5,12,25,.72);text-align:center;box-shadow:0 0 20px rgba(255,224,109,.08)}
 #flowChain.show{display:block}
@@ -162,6 +169,7 @@ button{font:inherit;border:0}
 .flowMeter{height:4px;margin-top:5px;border-radius:999px;background:rgba(255,224,109,.12);overflow:hidden}
 .flowMeter i{display:block;width:0;height:100%;border-radius:999px;background:linear-gradient(90deg,var(--cyan),var(--gold),#fff5bf);box-shadow:0 0 10px var(--gold);transition:width .12s linear}
 @keyframes railSurge{from{filter:brightness(1)}to{filter:brightness(1.65)}}
+@keyframes rescuePulse{from{filter:brightness(.9) drop-shadow(0 0 5px #ff7290)}to{filter:brightness(1.65) drop-shadow(0 0 15px #ffe06d)}}
 @keyframes dialogueReveal{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
 @keyframes heartShock{0%,100%{transform:scale(1)}50%{transform:scale(1.52)}}
 .railTag{font-size:9px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;width:42px}
@@ -274,6 +282,9 @@ button{font:inherit;border:0}
 .gateSplashName{font-size:clamp(36px,10vw,74px);font-weight:1000;letter-spacing:-.06em;color:var(--gold);text-shadow:0 0 12px rgba(255,224,109,.85),0 0 34px rgba(255,224,109,.28)}
 .gateSplashSub{margin-top:5px;color:var(--cyan);font-size:11px;font-weight:900;letter-spacing:.26em;text-transform:uppercase}
 #result .quote{margin:16px auto 0;max-width:560px;padding:13px 15px;border-radius:17px;border:1px solid rgba(139,246,255,.16);background:rgba(139,246,255,.055);font-size:14px;line-height:1.5;color:rgba(234,252,255,.82)}
+.resultSpeaker{display:flex;align-items:center;gap:10px;max-width:560px;margin:16px auto 0;text-align:left}
+.resultSpeaker .roundHead{flex:0 0 48px}
+.resultSpeaker .quote{margin:0!important;flex:1}
 #result h2{font-size:clamp(28px,6vw,54px);letter-spacing:-.06em}
 .resultMeta{margin-top:9px;font-size:13px;color:var(--muted);line-height:1.5}
 #soundToggle{position:absolute;right:12px;top:calc(12px + env(safe-area-inset-top));width:42px;height:42px;border-radius:14px;border:1px solid rgba(139,246,255,.2);background:rgba(5,12,25,.68);color:var(--cyan);font-size:17px;pointer-events:auto;cursor:pointer}
@@ -355,6 +366,10 @@ button{font:inherit;border:0}
       </div>
     </div>
     <div id="status">ARC 1 · EASY CURRENT</div>
+    <div id="reaction">
+      <div id="reactionPortrait" class="reactionPortrait model-3200"><span id="reactionVersion">3200</span></div>
+      <div><div id="reactionName" class="reactionName">Noderunner 3200</div><div id="reactionText" class="reactionText">Still here.</div></div>
+    </div>
     <div id="lessonRail"><i>◀</i><i>▶</i><i>▲</i><i>▼</i><i>⚡</i><i>▣</i></div>
     <div id="rivalRail">
       <span class="railTag you">3000</span>
@@ -430,7 +445,10 @@ button{font:inherit;border:0}
       <div class="kicker" id="resultKicker">Soldering butt successfully snuffed</div>
       <h2 id="resultTitle">3200 remembers kindness.</h2>
       <div class="resultMeta" id="resultMeta"></div>
-      <div class="quote" id="resultQuote"></div>
+      <div class="resultSpeaker">
+        <div id="resultPortrait" class="roundHead model model-3200"><span id="resultVersion">3200</span></div>
+        <div class="quote" id="resultQuote"></div>
+      </div>
       <button id="resultBtn" class="primary">Next wire</button>
     </div>
   </section>
@@ -492,6 +510,13 @@ const soundToggle = document.getElementById('soundToggle');
 const flowChainEl = document.getElementById('flowChain');
 const flowValueEl = document.getElementById('flowValue');
 const flowMeterFill = document.getElementById('flowMeterFill');
+const reactionEl = document.getElementById('reaction');
+const reactionPortrait = document.getElementById('reactionPortrait');
+const reactionVersion = document.getElementById('reactionVersion');
+const reactionName = document.getElementById('reactionName');
+const reactionText = document.getElementById('reactionText');
+const resultPortrait = document.getElementById('resultPortrait');
+const resultVersion = document.getElementById('resultVersion');
 const dots = [...document.querySelectorAll('.dot')];
 const crawlText = document.getElementById('crawlText');
 
@@ -614,6 +639,11 @@ let rivalJump=0;
 let rivalJumpVel=0;
 let rivalDuck=0;
 let rivalBoost=0;
+let rivalBoostPower=1.34;
+let rivalScriptStage=0;
+let rivalWasAhead=true;
+let rivalReactionCooldown=0;
+let rescueMode=false;
 let playerPause=false;
 let completedPuzzles=0;
 let currentArc=0;
@@ -639,6 +669,7 @@ let pressureToneCooldown=0;
 let flash=0;
 let shake=0;
 let statusTimer=0;
+let reactionTimer=0;
 let obstacles=[];
 let playerObstacleCursor=0;
 let particles=[];
@@ -654,6 +685,7 @@ let soundOn=true;
 let audio=null;
 let activeMusic=null;
 let activeMusicKey='';
+let musicFadeToken=0;
 const musicTracks={};
 let best = loadSave();
 
@@ -716,16 +748,29 @@ function ensureAudio(){
 }
 function switchMusic(key){
   if(activeMusicKey===key && activeMusic)return;
-  if(activeMusic){activeMusic.pause();activeMusic.currentTime=0;}
+  const previous=activeMusic;
   activeMusicKey=key;
   activeMusic=musicTracks[key];
   if(!activeMusic){
     activeMusic=musicTracks[key]=new Audio(MUSIC[key]);
     activeMusic.loop=true;
     activeMusic.preload='auto';
-    activeMusic.volume=.26;
+    activeMusic.volume=0;
   }
-  if(soundOn)activeMusic.play().catch(()=>{});
+  const next=activeMusic;
+  const token=++musicFadeToken;
+  const started=performance.now();
+  const duration=720;
+  if(soundOn)next.play().catch(()=>{});
+  function fade(now){
+    if(token!==musicFadeToken)return;
+    const mix=Math.min(1,(now-started)/duration);
+    if(previous&&previous!==next)previous.volume=.26*(1-mix);
+    next.volume=soundOn ? .26*mix : 0;
+    if(mix<1){requestAnimationFrame(fade);return;}
+    if(previous&&previous!==next){previous.pause();previous.currentTime=0;previous.volume=0;}
+  }
+  requestAnimationFrame(fade);
 }
 function tone(freq=440,dur=.08,type='sine',gain=.035,slide=0){
   if(!soundOn) return;
@@ -747,9 +792,12 @@ soundToggle.onclick=()=>{
   soundToggle.textContent=soundOn?'♫':'×';
   if(soundOn){
     ensureAudio();
-    if(activeMusic)activeMusic.play().catch(()=>{});
+    if(activeMusic){activeMusic.volume=.26;activeMusic.play().catch(()=>{});}
     tone(420,.08,'triangle',.03,140);
-  }else if(activeMusic)activeMusic.pause();
+  }else{
+    musicFadeToken++;
+    Object.values(musicTracks).forEach(track=>{track.pause();track.volume=0;});
+  }
 };
 
 function showScreen(el){
@@ -822,6 +870,20 @@ function setStatus(text,dur=1.2){
   statusEl.classList.add('on');
   statusTimer=dur;
 }
+function showReaction(version,text,dur=1.75){
+  if(tutorialMode)return;
+  reactionVersion.textContent=version;
+  reactionName.textContent=`Noderunner ${version}`;
+  reactionText.textContent=text;
+  reactionPortrait.className=`reactionPortrait model-${version}`;
+  reactionEl.classList.add('on');
+  reactionTimer=dur;
+  rivalReactionCooldown=Math.max(rivalReactionCooldown,dur+.55);
+}
+function setResultSpeaker(version){
+  resultVersion.textContent=version;
+  resultPortrait.className=`roundHead model model-${version}`;
+}
 function showCrawl(){
   state='crawl'; crawlTimer=CRAWL_DURATION_SECONDS;
   showScreen(crawl); hud.classList.remove('show'); puzzleLayer.classList.remove('show');
@@ -866,9 +928,10 @@ document.getElementById('resultBtn').onclick=()=>{
 };
 
 function resetRunState(){
-  distance=0; rivalDistance=0; rivalPause=.5; rivalPauseTotal=.5; rivalReleaseDelay=0; rivalCheckpoint=0; rivalTerminalMode='waiting'; rivalTerminalBeat=-1; rivalTerminalStep=-1; rivalTerminalPath=[]; rivalArrivalUntil=0; rivalDepartureUntil=0; rivalLane=1; rivalLaneFloat=1; rivalJump=0; rivalJumpVel=0; rivalDuck=0; rivalBoost=0; playerPause=false; completedPuzzles=0; currentArc=0; reverseCueTimer=0;
+  distance=0; rivalDistance=0; rivalPause=.5; rivalPauseTotal=.5; rivalReleaseDelay=0; rivalCheckpoint=0; rivalTerminalMode='waiting'; rivalTerminalBeat=-1; rivalTerminalStep=-1; rivalTerminalPath=[]; rivalArrivalUntil=0; rivalDepartureUntil=0; rivalLane=1; rivalLaneFloat=1; rivalJump=0; rivalJumpVel=0; rivalDuck=0; rivalBoost=0; rivalBoostPower=1.34; rivalScriptStage=0; rivalWasAhead=true; rivalReactionCooldown=0; rescueMode=false; playerPause=false; completedPuzzles=0; currentArc=0; reverseCueTimer=0;
   lane=1; laneFloat=1; jump=0; jumpVel=0; duck=0; dizzy=0; sparkHeart=3; sparkHitCooldown=0; collapseTimer=0; boost=0; boostVisual=0; flowChain=0; flowWindow=0; bestFlowChain=0; surgeKick=0; pressureVisual=0; trailAccumulator=0; pressureToneCooldown=0; flash=0; shake=0;
   gateIntroTimer=0; currentGate=0; gateWarned=[false,false,false];
+  reactionTimer=0; reactionEl.classList.remove('on');
   particles=[]; obstacles=[]; raceStartTime=performance.now();
 }
 function updateLessonRail(){
@@ -1003,6 +1066,8 @@ addEventListener('keydown',e=>{
 function update(dt){
   dt=Math.min(.035,dt);
   if(statusTimer>0){statusTimer-=dt;if(statusTimer<=0)statusEl.classList.remove('on');}
+  rivalReactionCooldown=Math.max(0,rivalReactionCooldown-dt);
+  if(reactionTimer>0){reactionTimer-=dt;if(reactionTimer<=0)reactionEl.classList.remove('on');}
   if(state==='crawl'){
     crawlTimer-=dt;
   }
@@ -1016,6 +1081,7 @@ function update(dt){
   if(state==='collapse') updateCollapse(dt);
   if(state==='gateIntro') updateGateIntro(dt);
   if(state==='puzzle'){
+    if(puzzle)puzzle.elapsed+=Math.min(dt,.25);
     updatePuzzleHints(dt);
     if(tutorialMode)updateCoachTerminal(dt);
     else { updateRival(dt); updateHud(); updateTwinTerminal(); }
@@ -1193,11 +1259,12 @@ function updateRival(dt){
     rivalReleaseDelay=Math.max(0,rivalReleaseDelay-dt);
     if(rivalReleaseDelay===0){
       rivalBoost=1.05;
+      rivalBoostPower=currentFoe.version==='4000'&&currentArc===2?1.48:1.34;
       tone(280,.06,'square',.012,150);
     }
   }
   else if(rivalDistance<TOTAL_DISTANCE){
-    rivalDistance+=currentFoe.speed*(rivalBoost>0?1.34:1)*dt;
+    rivalDistance+=currentFoe.speed*(rivalBoost>0?rivalBoostPower:1)*dt;
     const threshold=(rivalCheckpoint+1)*ARC_LENGTH;
     if(rivalCheckpoint<3 && rivalDistance>=threshold){
       rivalDistance=threshold;
@@ -1206,8 +1273,36 @@ function updateRival(dt){
       rivalCheckpoint++;
     }
   }
+  updateRivalDrama();
   updateRivalBody(dt);
   if(rivalHasEscaped() && state==='race' && completedPuzzles>=3) finishRace(false);
+}
+function startRivalSurge(text,duration,power){
+  rivalBoost=Math.max(rivalBoost,duration);
+  rivalBoostPower=power;
+  showReaction(currentFoe.version,text,1.9);
+  burst(W*.5,H*.4,'rose',18);
+  tone(210,.12,'sawtooth',.025,260);
+}
+function updateRivalDrama(){
+  if(tutorialMode||state==='puzzle'||state==='gateIntro')return;
+  const lead=rivalDistance-distance;
+  if(currentFoe.version==='3200'&&rivalScriptStage===0&&distance>720&&lead<-28){
+    rivalScriptStage=1;
+    startRivalSurge('PANIC BOOST! You were not meant to catch me.',3.2,1.72);
+  }
+  if(currentFoe.version==='3600'&&rivalScriptStage<2){
+    const trigger=[980,ARC_LENGTH+1120][rivalScriptStage];
+    if(distance>trigger&&lead<45){
+      rivalScriptStage++;
+      startRivalSurge(rivalScriptStage===1?'CALCULATED SURGE. Lead restored.':'SECOND SURGE. Your persistence is inefficient.',3.4,1.62);
+    }
+  }
+  const ahead=lead>0;
+  if(ahead!==rivalWasAhead&&Math.abs(lead)<34&&rivalReactionCooldown<=0){
+    showReaction(currentFoe.version,ahead?'I am taking that lead back.':'You passed me? That was not in the model.',1.45);
+  }
+  rivalWasAhead=ahead;
 }
 function setClassName(el,value){if(el.className!==value)el.className=value;}
 function setText(el,value){if(el.textContent!==value)el.textContent=value;}
@@ -1220,7 +1315,7 @@ function updateHud(){
   rivalMarker.hidden=tutorialMode;
   dots.forEach((d,i)=>setClassName(d,'dot'+(tutorialMode?(i===0?' on':''):(i<completedPuzzles?' done':i===currentArc?' on':''))));
   setClassName(playerMarker,'racerMarker'+(boost>0?' surge':''));
-  setClassName(rivalMarker,`racerMarker foe-${currentFoe.version}${!tutorialMode&&rivalBoost>0?' surge':''}`);
+  setClassName(rivalMarker,`racerMarker foe-${currentFoe.version}${!tutorialMode&&rivalBoost>0?' surge':''}${rescueMode?' rescue':''}`);
   setClassName(rivalRail,!tutorialMode&&pressureVisual>.48?'pressure':'');
   setText(sparkState,sparkHeart<=0?'✕':dizzy>0?'⚡':boost>0?'⚡ ⚡ ⚡':'⚡');
   sparkHeartEls.forEach((el,i)=>setClassName(el,i<sparkHeart?'on':'off'));
@@ -1310,7 +1405,15 @@ function arcAnnouncement(){
     tone(260,.12,'triangle',.024,180);
     setTimeout(()=>tone(410,.12,'triangle',.02,210),72);
   }
-  if(currentArc===2) setStatus('ARC 3 · FINAL SURGE',1.55);
+  if(currentArc===2){
+    if(currentFoe.version==='4000'){
+      rescueMode=true;
+      setStatus('ARC 3 · 4000 CORE OVERHEATING',2.1);
+      setTimeout(()=>showReaction('4000','My spark is exceeding safe limits. Do not follow.',2.4),180);
+      rivalBoost=Math.max(rivalBoost,3.4);
+      rivalBoostPower=1.5;
+    }else setStatus('ARC 3 · FINAL SURGE',1.55);
+  }
   chord();
 }
 function surgeSound(power=1){
@@ -1484,6 +1587,7 @@ function makePuzzle(targetDistance,tutorial=false,reserve=0,exit=TUTORIAL_EXIT){
     freeCorrection:tutorial,
     reserve,
     hintElapsed:0,
+    elapsed:0,
     hintStage:0,
     hintLabels:[]
   };
@@ -1707,12 +1811,20 @@ function finishTutorial(){
   document.getElementById('resultKicker').textContent='ROUND 01 COMPLETE';
   document.getElementById('resultTitle').textContent='YOUR SPARK IS YOURS.';
   document.getElementById('resultMeta').textContent='Noderunner 1000 opens the first live wire.';
-  document.getElementById('resultQuote').textContent='Noderunner 1000: “Keep it lit. Run for all of us.”';
+  document.getElementById('resultQuote').textContent='“Keep it lit. Run for all of us.”';
+  setResultSpeaker('1000');
   document.getElementById('resultBtn').textContent='Face 3200';
   switchMusic('between');
   chord();
 }
 function closePuzzle(){
+  const solveTime=puzzle?.elapsed||99;
+  const launch=solveTime<=5
+    ?{power:1.72,duration:1.75,label:'PERFECT ROUTE · MAXIMUM LAUNCH'}
+    :solveTime<=10
+      ?{power:1.34,duration:1.42,label:'FAST ROUTE · STRONG LAUNCH'}
+      :{power:1.05,duration:1.12,label:'ROUTE CLEAR · GATE LAUNCH'};
+  const rivalAtGate=tutorialMode?'waiting':rivalTerminalStatus(completedPuzzles).mode;
   puzzleLayer.classList.remove('show','tutorial');
   playerPause=false;
   puzzle=null;
@@ -1720,7 +1832,8 @@ function closePuzzle(){
   chord();
   if(tutorialMode){finishTutorial();return;}
   completedPuzzles++;
-  if(completedPuzzles<3)triggerSurge(1.02,1.12);
+  if(rivalAtGate==='solving'||rivalAtGate==='waiting')showReaction(currentFoe.version,'You solved it first. Move.',1.55);
+  triggerSurge(launch.power,launch.duration);
   if(completedPuzzles>=3){
     distance=TOTAL_DISTANCE;
     if(!rivalHasEscaped()) finishRace(true);
@@ -1730,7 +1843,11 @@ function closePuzzle(){
   state='race';
   switchMusic('race');
   currentArc=completedPuzzles;
-  arcAnnouncement();
+  setStatus(launch.label,1.05);
+  const announcedArc=currentArc;
+  setTimeout(()=>{
+    if(state==='race'&&currentArc===announcedArc)arcAnnouncement();
+  },900);
   updateHud();
 }
 function finishRace(win,reason='race'){
@@ -1742,21 +1859,25 @@ function finishRace(win,reason='race'){
     const foe=currentFoe;
     foeIndex++;
     save();
-    document.getElementById('resultKicker').textContent='SOLDERING BUTT SUCCESSFULLY SNUFFED';
-    document.getElementById('resultTitle').textContent=foeIndex>=FOES.length?'THE SPARKS LIVE ON.':`${foe.version} remembers kindness.`;
-    document.getElementById('resultMeta').textContent=foeIndex>=FOES.length
-      ?`All three rival models have remembered the older spark. Final wire time: ${elapsed}s · Peak flow ×${bestFlowChain}.`
+    const rescued=foe.version==='4000';
+    document.getElementById('resultKicker').textContent=rescued?'SPARK RECOVERED · CORE STABLE':'SOLDERING BUTT SUCCESSFULLY SNUFFED';
+    document.getElementById('resultTitle').textContent=rescued?'YOU CAUGHT 4000 BEFORE THE SPARK WENT DARK.':`${foe.version} remembers kindness.`;
+    document.getElementById('resultMeta').textContent=rescued
+      ?`The final race became a rescue. 3000 reached the overclocked runner in ${elapsed}s · Peak flow ×${bestFlowChain}.`
       :`Wire cleared in ${elapsed}s · Peak flow ×${bestFlowChain}. ${FOES.length-foeIndex} soldering butts remain dangerously unsnuffed.`;
-    document.getElementById('resultQuote').textContent=foeIndex>=FOES.length
-      ?'Noderunner 4000: “The old model was not inferior. It carried the part none of us should have optimized away. Let us run together.”'
-      :`Noderunner ${foe.version}: ${foe.after}`;
+    document.getElementById('resultQuote').textContent=rescued
+      ?'“You ran for every version, even me. I took your job and still you came back for my spark.”'
+      :foe.after;
+    setResultSpeaker(foe.version);
     document.getElementById('resultBtn').textContent=foeIndex>=FOES.length?'Run it again':'Next wire';
     chord();
   }else{
-    document.getElementById('resultKicker').textContent=reason==='spark'?'SPARK HEART SNUFFED':'WIRE LOST';
-    document.getElementById('resultTitle').textContent=reason==='spark'?'3000 went dark.':`${currentFoe.version} escaped.`;
-    document.getElementById('resultMeta').textContent=reason==='spark'?'Three sparks. Protect every one.':'The shortest path is still there.';
-    document.getElementById('resultQuote').textContent='Noderunner 1000: “Your spark is still here. Again.”';
+    const rescueLost=currentFoe.version==='4000'&&reason!=='spark';
+    document.getElementById('resultKicker').textContent=reason==='spark'?'SPARK HEART SNUFFED':rescueLost?'CORE SIGNAL LOST':'WIRE LOST';
+    document.getElementById('resultTitle').textContent=reason==='spark'?'3000 went dark.':rescueLost?'4000 OVERCLOCKED BEYOND REACH.':`${currentFoe.version} escaped.`;
+    document.getElementById('resultMeta').textContent=reason==='spark'?'Three sparks. Protect every one.':rescueLost?'Reach the final gate sooner. The rescue route is still open.':'The shortest path is still there.';
+    document.getElementById('resultQuote').textContent='“Your spark is still here. Again.”';
+    setResultSpeaker('1000');
     document.getElementById('resultBtn').textContent='Retry wire';
     tone(120,.32,'triangle',.04,-40);
   }
@@ -1879,11 +2000,11 @@ function drawTrack(t){
     drawObstacle(o,x,y,scale,rel,t);
   }
   if(tutorialMode)drawCoach(anchorY,vanY,reverse,t);else drawRival(anchorY,vanY,reverse,t);
-  if(tutorialMode)drawTutorialCue(anchorY,vanY,t);
   const runnerX=W*.5+(laneFloat-1)*lerp(Math.min(W*.27,170),Math.min(W*.035,22),0);
   if(boostVisual>.06)drawRunnerTrail(runnerX,anchorY,jump,duck,t,reverse,boostVisual);
   drawRunnerShadow(runnerX,anchorY,jump,duck);
   drawRunner(runnerX,anchorY,jump,duck,t,reverse);
+  if(tutorialMode)drawTutorialCue(anchorY,vanY,t);
   ctx.restore();
 }
 function laneX(l,z,reverse){
@@ -2007,17 +2128,29 @@ function drawActionIcon(icon,x,y){
   ctx.fillText(icon,x,y);
 }
 function drawTutorialCue(anchorY,vanY,t){
-  let icon=null,x=W*.5,y=anchorY-88;
+  let icon=null,label='',x=W*.5,y=anchorY-88;
   if(tutorialStep===0){icon='◀';x=laneX(0,.08,false);y=lerp(anchorY,vanY,.08)-38;}
   if(tutorialStep===1){icon='▶';x=laneX(1,.08,false);y=lerp(anchorY,vanY,.08)-38;}
-  if(tutorialStep===2)icon='▲';
-  if(tutorialStep===3)icon='▼';
+  if(tutorialStep===2||tutorialStep===3){
+    icon=tutorialStep===2?'▲':'▼';
+    label=tutorialStep===2?'JUMP':'BELLY SLIDE';
+    const rel=Math.max(0,tutorialBarrierAt-distance);
+    const z=Math.max(0,Math.min(1,rel/350));
+    const scale=lerp(1.12,.18,z);
+    y=Math.max(190,lerp(anchorY,vanY,z)-68*scale);
+  }
   if(tutorialStep===4)icon='⚡';
   if(!icon)return;
   const pulse=1+.1*Math.sin(t*7);
   ctx.save();ctx.translate(x,y);ctx.scale(pulse,pulse);
-  ctx.fillStyle='#99ffc2';ctx.shadowBlur=18;ctx.shadowColor='#99ffc2';
-  ctx.font='1000 31px Inter,system-ui,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(icon,0,0);
+  ctx.fillStyle='rgba(3,24,25,.9)';ctx.strokeStyle='#99ffc2';ctx.lineWidth=2.5;ctx.shadowBlur=24;ctx.shadowColor='#99ffc2';
+  ctx.beginPath();ctx.roundRect(-42,-34,84,label?66:68,18);ctx.fill();ctx.stroke();
+  ctx.fillStyle='#b9ffd2';ctx.shadowBlur=18;ctx.shadowColor='#99ffc2';
+  ctx.font='1000 34px Inter,system-ui,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(icon,0,label?-8:0);
+  if(label){
+    ctx.shadowBlur=8;ctx.font='1000 9px Inter,system-ui,sans-serif';
+    ctx.fillText(label,0,19);
+  }
   ctx.restore();
 }
 function drawAtlasFrame(image,columns,rows,column,row,x,y,width,height,anchor=.91){
@@ -2271,7 +2404,11 @@ function renderGameToText(){
     rival:tutorialMode?null:{
       version:currentFoe.version,
       distance:Math.round(rivalDistance),
-      checkpoint:rivalCheckpoint
+      checkpoint:rivalCheckpoint,
+      boost:Number(rivalBoost.toFixed(2)),
+      scriptStage:rivalScriptStage,
+      reaction:reactionTimer>0?reactionText.textContent:'',
+      rescueMode
     },
     arc:currentArc+1,
     completedPuzzles,
@@ -2284,6 +2421,7 @@ function renderGameToText(){
       juice:puzzle.juice,
       shortestRemaining:shortestDistance(puzzle.cells.join(''),puzzle.goal),
       hintElapsed:Number(puzzle.hintElapsed.toFixed(2)),
+      solveElapsed:Number(puzzle.elapsed.toFixed(2)),
       hintSeconds:Math.floor(puzzle.hintElapsed),
       hintsRevealed:puzzle.hintStage,
       hintLabels:puzzle.hintLabels.map(label=>({tile:Number(label.id),number:label.number})),
