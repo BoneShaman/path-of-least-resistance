@@ -25,6 +25,7 @@ canvas{display:block;width:100%;height:100%;background:radial-gradient(circle at
 #ui{position:fixed;inset:0;pointer-events:none}
 .screen{position:absolute;inset:0;display:none;align-items:center;justify-content:center;padding:22px;pointer-events:auto;background:radial-gradient(circle at 50% 35%,rgba(22,70,98,.56),rgba(2,5,13,.92) 66%)}
 .screen.show{display:flex}
+#title{background:linear-gradient(180deg,rgba(2,6,15,.28),rgba(2,6,15,.76)),url("assets/backgrounds/nodewazzle-raceway-title.png") center/cover no-repeat}
 .card{width:min(760px,100%);padding:24px;border:1px solid rgba(139,246,255,.28);border-radius:26px;background:linear-gradient(180deg,rgba(12,27,50,.93),rgba(4,10,23,.94));box-shadow:0 0 0 1px rgba(255,255,255,.035) inset,0 22px 80px rgba(0,0,0,.38),0 0 44px rgba(83,215,255,.1);text-align:center}
 .titleCard{background:transparent;border-color:transparent;box-shadow:none;padding:26px 12px 22px;display:flex;flex-direction:column;align-items:center}
 .titleCard .kicker{margin-bottom:10px}
@@ -43,15 +44,17 @@ h1::after{content:"";position:absolute;left:8%;right:5%;bottom:-10px;height:2px;
 .roundLine.player{grid-template-columns:minmax(0,1fr) 48px}
 .roundLine.player .roundHead{grid-column:2}
 .roundLine.player .roundBubble{grid-column:1;grid-row:1;text-align:right}
-.roundHead{position:relative;width:48px;height:48px;border-radius:14px;border:1px solid rgba(139,246,255,.22);background:linear-gradient(180deg,rgba(17,43,71,.92),rgba(5,13,28,.96));box-shadow:0 0 14px rgba(139,246,255,.07);overflow:hidden}
+.roundHead{position:relative;width:48px;height:48px;border-radius:14px;border:1px solid rgba(139,246,255,.22);background-image:linear-gradient(180deg,rgba(4,10,23,.02),rgba(4,10,23,.7)),url("assets/concepts/noderunner-lineup.png");background-size:500% auto;background-position:var(--portrait-x,25%) center;box-shadow:0 0 14px rgba(139,246,255,.07);overflow:hidden}
 .roundHead::before{content:"";position:absolute;left:50%;top:8px;width:17px;height:17px;transform:translateX(-50%);border:2px solid #d9f8ff;border-radius:50%;background:rgba(139,246,255,.12)}
 .roundHead::after{content:"";position:absolute;left:50%;top:26px;width:5px;height:14px;transform:translateX(-50%);border-radius:999px;background:#d9f8ff;box-shadow:0 0 8px rgba(139,246,255,.54)}
+.roundHead.model{background-color:#071021}
+.roundHead.model::before,.roundHead.model::after{display:none}
 .roundHead span{position:absolute;left:4px;right:4px;bottom:3px;color:#d9f8ff;font-size:8px;font-weight:1000;letter-spacing:.08em;text-align:center}
-.roundLine.foe .roundHead{border-color:rgba(255,114,144,.34);background:linear-gradient(180deg,rgba(53,14,35,.92),rgba(18,7,22,.96));box-shadow:0 0 14px rgba(255,114,144,.09)}
+.roundLine.foe .roundHead{border-color:rgba(255,114,144,.34);background-color:rgba(18,7,22,.96);box-shadow:0 0 14px rgba(255,114,144,.09)}
 .roundLine.foe .roundHead::before{border-color:#ffd7e1;background:rgba(255,114,144,.14)}
 .roundLine.foe .roundHead::after{background:#ffd7e1;box-shadow:0 0 8px rgba(255,114,144,.58)}
 .roundLine.foe .roundHead span{color:#ffd7e1}
-.roundLine.mentor .roundHead{border-color:rgba(153,255,194,.34);background:linear-gradient(180deg,rgba(9,46,42,.92),rgba(4,19,23,.96));box-shadow:0 0 14px rgba(153,255,194,.09)}
+.roundLine.mentor .roundHead{border-color:rgba(153,255,194,.34);background-color:rgba(4,19,23,.96);box-shadow:0 0 14px rgba(153,255,194,.09)}
 .roundLine.mentor .roundHead::before{border-color:#d9ffe6;background:rgba(153,255,194,.14)}
 .roundLine.mentor .roundHead::after{background:#d9ffe6;box-shadow:0 0 8px rgba(153,255,194,.58)}
 .roundLine.mentor .roundHead span{color:#d9ffe6}
@@ -68,7 +71,7 @@ button{font:inherit;border:0}
 .crawlBottom{position:absolute;left:0;right:0;bottom:0;height:22%;background:linear-gradient(180deg,rgba(2,7,18,0),rgba(2,7,18,.98));pointer-events:none;z-index:3}
 .crawlViewport{position:absolute;inset:0;display:flex;align-items:flex-end;justify-content:center;padding:22px 16px 90px;perspective:420px;overflow:hidden}
 .crawlText{width:min(720px,92%);color:var(--gold);text-shadow:0 0 10px rgba(255,224,109,.14);transform-origin:50% 100%;transform:rotateX(25deg) translateY(74%);font-weight:850;letter-spacing:.015em;line-height:1.58;text-align:justify}
-#crawl.play .crawlText{animation:storyCrawl var(--crawl-duration,52s) linear forwards}
+#crawl.play .crawlText{animation:storyCrawl var(--crawl-duration,60s) linear forwards}
 .crawlIntro{margin-bottom:18px;font-size:clamp(24px,5vw,40px);font-weight:1000;letter-spacing:.22em;text-align:center}
 .crawlChapter{margin-bottom:10px;font-size:clamp(14px,2.7vw,20px);font-weight:900;letter-spacing:.24em;text-align:center}
 .crawlTitle{margin-bottom:22px;font-size:clamp(30px,6vw,56px);line-height:1;letter-spacing:-.05em;text-align:center}
@@ -102,6 +105,13 @@ button{font:inherit;border:0}
 .dialogueCard{width:min(920px,100%);display:grid;grid-template-columns:92px minmax(0,1fr);gap:12px;align-items:stretch;padding:12px;border:2px solid rgba(234,246,255,.38);border-radius:16px;background:linear-gradient(180deg,rgba(14,28,58,.96),rgba(5,12,27,.98));box-shadow:0 18px 60px rgba(0,0,0,.36),0 0 0 2px rgba(87,149,255,.12) inset}
 .dialoguePortrait{position:relative;border-radius:12px;border:1px solid rgba(234,246,255,.28);background:linear-gradient(180deg,rgba(18,42,77,.92),rgba(8,17,33,.96));overflow:hidden}
 .dialoguePortrait::before{content:"";position:absolute;left:10px;right:10px;top:10px;bottom:10px;border-radius:10px;background:radial-gradient(circle at 50% 26%,rgba(255,255,255,.16),transparent 28%),linear-gradient(180deg,rgba(255,255,255,.02),rgba(0,0,0,.12))}
+.dialoguePortrait.model{background-image:linear-gradient(180deg,rgba(4,10,23,.02),rgba(4,10,23,.68)),url("assets/concepts/noderunner-lineup.png");background-size:500% auto;background-position:var(--portrait-x,25%) center}
+.dialoguePortrait.model::before,.dialoguePortrait.model .dialogueHead,.dialoguePortrait.model .dialogueCore,.dialoguePortrait.model .dialogueArm,.dialoguePortrait.model .dialogueLeg,.dialoguePortrait.model .dialogueSpark{display:none}
+.model-1000{--portrait-x:0%}
+.model-3000{--portrait-x:25%}
+.model-3200{--portrait-x:50%}
+.model-3600{--portrait-x:75%}
+.model-4000{--portrait-x:100%}
 .dialoguePortrait.hero{box-shadow:0 0 22px rgba(139,246,255,.08)}
 .dialoguePortrait.mentor{box-shadow:0 0 22px rgba(153,255,194,.12)}
 .dialoguePortrait.foe{box-shadow:0 0 22px rgba(255,114,144,.1)}
@@ -474,7 +484,7 @@ const dots = [...document.querySelectorAll('.dot')];
 const crawlText = document.getElementById('crawlText');
 
 const TAU = Math.PI * 2;
-const CRAWL_DURATION_SECONDS = 52;
+const CRAWL_DURATION_SECONDS = 60;
 const ARC_LENGTH = 4600;
 const TOTAL_DISTANCE = ARC_LENGTH * 3;
 const SAVE_KEY = 'path-of-least-resistance-v1';
@@ -510,8 +520,11 @@ function loadSprite(src){
 const SPRITES = {
   hero:loadSprite('assets/sprites/runtime/noderunner-3000-actions.png'),
   coach:loadSprite('assets/sprites/runtime/noderunner-1000-actions.png'),
-  rivals:loadSprite('assets/sprites/runtime/rivals-run.png')
+  rivals:loadSprite('assets/sprites/runtime/rivals-run.png'),
+  obstacles:loadSprite('assets/sprites/runtime/electromechanical-obstacles.png'),
+  world:loadSprite('assets/backgrounds/nodewazzle-raceway-title.png')
 };
+SPRITES.world.addEventListener('load',rebuildWorldBackdrop);
 const COACH = {
   version:'1000',
   intro:'Stay close. Keep your spark lit.',
@@ -616,6 +629,7 @@ let playerObstacleCursor=0;
 let particles=[];
 let bgSparks=[];
 let backgroundGradient=null;
+let worldBackdrop=null;
 let puzzle=null;
 let gateIntroTimer=0;
 let currentGate=0;
@@ -645,6 +659,7 @@ function resize(){
   backgroundGradient.addColorStop(0,'#103253');
   backgroundGradient.addColorStop(.45,'#07152b');
   backgroundGradient.addColorStop(1,'#02050d');
+  rebuildWorldBackdrop();
   seedBackground();
 }
 addEventListener('resize',resize,{passive:true});
@@ -654,6 +669,29 @@ function seedBackground(){
   bgSparks=Array.from({length:Math.min(100,Math.max(48,Math.floor(W*H/11000)))},()=>({
     x:Math.random()*W,y:Math.random()*H,z:Math.random(),tw:Math.random()*TAU
   }));
+}
+function rebuildWorldBackdrop(){
+  if(!W||!H||!SPRITES.world.complete||!SPRITES.world.naturalWidth)return;
+  worldBackdrop=document.createElement('canvas');
+  worldBackdrop.width=Math.floor(W*DPR);
+  worldBackdrop.height=Math.floor(H*DPR);
+  const backdropCtx=worldBackdrop.getContext('2d');
+  backdropCtx.setTransform(DPR,0,0,DPR,0,0);
+  const sourceRatio=SPRITES.world.naturalWidth/SPRITES.world.naturalHeight;
+  const targetRatio=W/H;
+  let sourceWidth=SPRITES.world.naturalWidth,sourceHeight=SPRITES.world.naturalHeight,sourceX=0,sourceY=0;
+  if(sourceRatio>targetRatio){
+    sourceWidth=sourceHeight*targetRatio;
+    sourceX=(SPRITES.world.naturalWidth-sourceWidth)*.5;
+  }else{
+    sourceHeight=sourceWidth/targetRatio;
+    sourceY=(SPRITES.world.naturalHeight-sourceHeight)*.42;
+  }
+  backdropCtx.globalAlpha=.18;
+  backdropCtx.drawImage(SPRITES.world,sourceX,sourceY,sourceWidth,sourceHeight,0,0,W,H);
+  backdropCtx.globalAlpha=1;
+  backdropCtx.fillStyle='rgba(2,8,20,.42)';
+  backdropCtx.fillRect(0,0,W,H);
 }
 function ensureAudio(){
   if(audio || !soundOn) return;
@@ -708,11 +746,12 @@ function showScreen(el){
   if(el) el.classList.add('show');
 }
 function openDialogue({tag,name,text,preset='hero',label='',duration=4.2,resume='race'}){
+  const version=label || name.replace('Noderunner ','');
   dialogueTag.textContent=tag;
   dialogueName.textContent=name;
   dialogueText.textContent=text;
-  dialoguePortrait.className='dialoguePortrait '+preset;
-  dialoguePortraitLabel.textContent=label || name.replace('Noderunner ','');
+  dialoguePortrait.className=`dialoguePortrait ${preset} model model-${version}`;
+  dialoguePortraitLabel.textContent=version;
   dialogueTimer=duration;
   dialogueMin=.6;
   dialogueResume=resume;
@@ -742,7 +781,7 @@ function escapeBrief(text=''){
 function renderBriefConversation(lines){
   briefStory.innerHTML=lines.map(line=>`
     <div class="roundLine ${line.role}">
-      <div class="roundHead"><span>${escapeBrief(line.version)}</span></div>
+      <div class="roundHead model model-${escapeBrief(line.version)}"><span>${escapeBrief(line.version)}</span></div>
       <div class="roundBubble"><span class="roundSpeaker">Noderunner ${escapeBrief(line.version)}</span>${escapeBrief(line.text)}</div>
     </div>`).join('');
 }
@@ -1714,6 +1753,7 @@ function draw(now=performance.now()){
 }
 function drawBackground(t){
   ctx.fillStyle=backgroundGradient;ctx.fillRect(0,0,W,H);
+  if(worldBackdrop)ctx.drawImage(worldBackdrop,0,0,W,H);
   for(const s of bgSparks){
     const a=.18+.36*(.5+.5*Math.sin(t*1.8+s.tw));
     ctx.fillStyle=`rgba(139,246,255,${a})`;
@@ -1835,6 +1875,16 @@ function drawOhmGate(rel,anchorY,vanY,reverse,t,number){
   const s=lerp(1,.27,z);
   const pulse=.72+.28*Math.sin(t*6);
   ctx.save();
+  ctx.shadowBlur=24*pulse;ctx.shadowColor='#ffe06d';
+  const gateDrawn=drawAtlasFrame(SPRITES.obstacles,4,2,0,1,W*.5,y,half*2.2,180*s,.8);
+  if(gateDrawn){
+    ctx.fillStyle=`rgba(255,224,109,${.76+.2*pulse})`;
+    ctx.font=`950 ${Math.max(11,23*s)}px Inter,system-ui,sans-serif`;
+    ctx.textAlign='center';ctx.textBaseline='bottom';
+    ctx.fillText(`OHM GATE ${number}`,W*.5,y-76*s);
+    ctx.restore();
+    return;
+  }
   ctx.shadowBlur=18*pulse;ctx.shadowColor='#ffe06d';
   ctx.strokeStyle=`rgba(255,224,109,${.62+.3*pulse})`;ctx.fillStyle='#ffe06d';
   ctx.lineWidth=Math.max(2,4*s);
@@ -1864,15 +1914,25 @@ function drawObstacleShadow(o,x,y,s,rel,t){
 }
 function drawObstacle(o,x,y,s,rel,t){
   ctx.save();ctx.translate(x,y);ctx.scale(s,s);
+  const urgent=rel<135;
   if(o.type==='spark'){
-    ctx.rotate(t*4);
-    ctx.fillStyle='#ffe06d';ctx.shadowBlur=20;ctx.shadowColor='#ffe06d';
-    ctx.beginPath();
-    for(let i=0;i<8;i++){const r=i%2?8:18,a=i*Math.PI/4;ctx.lineTo(Math.cos(a)*r,Math.sin(a)*r);}
+    const pulse=1+.08*Math.sin(t*7);
+    ctx.scale(pulse,pulse);ctx.shadowBlur=22;ctx.shadowColor='#ffe06d';
+    if(drawAtlasFrame(SPRITES.obstacles,4,2,3,0,0,12,62,62,.72)){ctx.restore();return;}
+    ctx.rotate(t*4);ctx.fillStyle='#ffe06d';
+    ctx.beginPath();for(let i=0;i<8;i++){const r=i%2?8:18,a=i*Math.PI/4;ctx.lineTo(Math.cos(a)*r,Math.sin(a)*r);}
     ctx.closePath();ctx.fill();ctx.restore();return;
   }
-  const urgent=rel<135;
   ctx.shadowBlur=18;ctx.shadowColor='#ff7290';
+  const atlasCell=o.type==='low'?0:o.type==='high'?1:2;
+  const atlasSize=o.type==='low'?108:o.type==='high'?122:92;
+  const atlasAnchor=o.type==='high'?.82:.76;
+  if(drawAtlasFrame(SPRITES.obstacles,4,2,atlasCell,0,0,12,atlasSize,atlasSize,atlasAnchor)){
+    if(urgent&&o.type==='low')drawActionIcon('▲',0,-52);
+    if(urgent&&o.type==='high')drawActionIcon('▼',0,-62);
+    ctx.restore();
+    return;
+  }
   ctx.strokeStyle='#ff9eb0';ctx.fillStyle='rgba(255,70,115,.24)';ctx.lineWidth=4;
   if(o.type==='block'){
     ctx.beginPath();ctx.roundRect(-23,-24,46,48,10);ctx.fill();ctx.stroke();

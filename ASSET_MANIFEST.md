@@ -25,7 +25,14 @@ All gameplay racers are shown from directly behind, moving straight away from th
   - Barriers, duck gate, blocker, pickup, OHM Gate, and relay props
 
 The matching chroma-key masters are retained under `assets/sprites/source/`.
-Character atlases are integrated into gameplay. The obstacle atlas is production-ready reference material; hazards remain procedural until its silhouettes are individually cut and collision-matched.
+Character atlases are integrated into gameplay. The obstacle atlas now supplies the jump barrier, duck gate, blocker, spark pickup, and OHM Gate while procedural glow, shadows, and action prompts preserve collision readability.
+
+## Backgrounds
+
+- `assets/backgrounds/nodewazzle-raceway-title.png`
+  - Title-screen key art
+  - Low-opacity race-world layer behind the procedural track
+  - Centered direct-forward wire perspective with title-safe sky
 
 ## Concept References
 

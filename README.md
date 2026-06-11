@@ -93,7 +93,7 @@ See [DEVELOPMENT_HISTORY.md](DEVELOPMENT_HISTORY.md) for the original concept an
 
 ## Visual Direction
 
-The production direction is storybook electromechanics: worn enamel, porcelain, copper, relay towers, glass current, and an expressive mechanical penguin whose signature move is a sparking belly-slide.
+The production direction is storybook electromechanics: worn enamel, porcelain, copper, relay towers, glass current, and an expressive mechanical penguin whose signature move is a sparking belly-slide. ImageGen character sprites, portraits, physical hazards, OHM Gates, title art, and a cached race-world layer are integrated into the playable build.
 
 See [ART_DIRECTION.md](ART_DIRECTION.md) and [ASSET_MANIFEST.md](ASSET_MANIFEST.md).
 
