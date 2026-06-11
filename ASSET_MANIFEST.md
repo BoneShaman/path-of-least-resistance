@@ -6,6 +6,8 @@ Production assets use the **Current Folk** storybook-electromechanical direction
 
 All gameplay racers are shown from directly behind, moving straight away from the player. Side and three-quarter animation sheets are rejected for runtime use.
 
+UI contexts use front-facing model art: briefing portraits, the shared race timeline, and OHM puzzle terminals. Rear-facing art is reserved for physical raceway movement.
+
 ## Runtime Atlases
 
 - `assets/sprites/runtime/noderunner-3000-actions.png`
@@ -23,9 +25,13 @@ All gameplay racers are shown from directly behind, moving straight away from th
 - `assets/sprites/runtime/electromechanical-obstacles.png`
   - 4 columns x 2 rows
   - Barriers, duck gate, blocker, pickup, OHM Gate, and relay props
+- `assets/sprites/runtime/clear-slide-gate.png`
+  - Dedicated empty raised crossbar for belly-slide hazards
+  - Replaces the hanging-duck gate art
+  - Matching chroma master: `assets/sprites/source/clear-slide-gate-chroma.png`
 
 The matching chroma-key masters are retained under `assets/sprites/source/`.
-Character atlases are integrated into gameplay. The obstacle atlas now supplies the jump barrier, duck gate, blocker, spark pickup, and OHM Gate while procedural glow, shadows, and action prompts preserve collision readability.
+Character atlases are integrated into gameplay. The obstacle atlas supplies the jump barrier, blocker, spark pickup, and OHM Gate; the dedicated clear gate supplies slide hazards. Procedural glow, shadows, and action prompts preserve collision readability.
 
 ## Backgrounds
 

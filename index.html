@@ -39,7 +39,8 @@ h1{position:relative;margin:12px auto 8px;max-width:680px;font-size:clamp(38px,8
 h1::after{content:"";position:absolute;left:8%;right:5%;bottom:-10px;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);filter:drop-shadow(0 0 9px var(--cyan));animation:scan 2.8s infinite}
 .subtitle{margin-top:22px;font-size:clamp(14px,3.1vw,20px);font-weight:800;letter-spacing:.26em;text-transform:uppercase;color:var(--gold)}
 .story{margin:18px auto 0;max-width:620px;font-size:clamp(14px,2.45vw,17px);line-height:1.55;color:rgba(234,252,255,.82)}
-.roundTalk{display:grid;gap:10px;text-align:left}
+.roundTalk{display:grid;min-height:74px;gap:10px;text-align:left}
+.roundLine{animation:dialogueReveal .22s ease both}
 .roundLine{display:grid;grid-template-columns:48px minmax(0,1fr);gap:10px;align-items:center}
 .roundLine.player{grid-template-columns:minmax(0,1fr) 48px}
 .roundLine.player .roundHead{grid-column:2}
@@ -143,14 +144,17 @@ button{font:inherit;border:0}
   .dialogueText{font-size:15px}
   .dialogueName{font-size:13px}
 }
-#rivalRail{position:absolute;left:12px;right:12px;bottom:calc(156px + env(safe-area-inset-bottom));display:flex;align-items:center;gap:9px}
-.rail{height:8px;flex:1;border-radius:999px;background:rgba(139,246,255,.12);overflow:hidden;border:1px solid rgba(139,246,255,.14)}
-.rail span{display:block;height:100%;border-radius:999px;transition:width .18s linear}
-#playerFill{background:linear-gradient(90deg,var(--blue),var(--cyan))}
-#rivalFill{background:linear-gradient(90deg,#ff6b91,#ffbf6f)}
-#playerFill.surge{background:linear-gradient(90deg,#fff0a1,#8bf6ff,#ffffff);box-shadow:0 0 14px rgba(139,246,255,.95),0 0 26px rgba(255,224,109,.54);animation:railSurge .22s ease-in-out infinite alternate}
-#rivalFill.surge{box-shadow:0 0 14px rgba(255,114,144,.94),0 0 24px rgba(255,190,111,.48);animation:railSurge .25s ease-in-out infinite alternate}
-#rivalRail.pressure .rail{border-color:rgba(255,114,144,.36);box-shadow:0 0 13px rgba(255,114,144,.12)}
+#rivalRail{position:absolute;left:12px;right:12px;bottom:calc(156px + env(safe-area-inset-bottom));display:grid;grid-template-columns:42px minmax(0,1fr) 42px;align-items:center;gap:9px}
+.raceTimeline{height:12px;position:relative;border-radius:999px;border:1px solid rgba(139,246,255,.22);background:linear-gradient(90deg,rgba(74,168,255,.18),rgba(139,246,255,.12),rgba(255,224,109,.15));box-shadow:0 0 18px rgba(74,168,255,.08)}
+.raceTimeline::before,.raceTimeline::after{content:"";position:absolute;top:-3px;width:2px;height:16px;border-radius:2px;background:rgba(255,224,109,.52);box-shadow:0 0 7px rgba(255,224,109,.48)}
+.raceTimeline::before{left:33.333%}.raceTimeline::after{left:66.666%}
+.racerMarker{position:absolute;top:50%;left:0;width:34px;height:34px;transform:translate(-50%,-52%);border-radius:50%;border:1px solid rgba(234,246,255,.45);background-image:linear-gradient(180deg,rgba(4,10,23,.02),rgba(4,10,23,.52)),url("assets/concepts/noderunner-lineup.png");background-size:500% auto;background-position:var(--portrait-x,25%) center;background-repeat:no-repeat;filter:drop-shadow(0 0 7px rgba(139,246,255,.82));transition:left .18s linear,filter .18s ease;z-index:3}
+#playerMarker{--portrait-x:25%}
+#rivalMarker{--portrait-x:50%;filter:drop-shadow(0 0 7px rgba(255,114,144,.82))}
+#rivalMarker.foe-3600{--portrait-x:75%}
+#rivalMarker.foe-4000{--portrait-x:100%}
+.racerMarker.surge{filter:drop-shadow(0 0 8px #fff2a8) drop-shadow(0 0 13px #8bf6ff);animation:railSurge .22s ease-in-out infinite alternate}
+#rivalRail.pressure .raceTimeline{border-color:rgba(255,114,144,.5);box-shadow:0 0 16px rgba(255,114,144,.2)}
 #flowChain{position:absolute;left:50%;bottom:calc(110px + env(safe-area-inset-bottom));transform:translateX(-50%);display:none;min-width:148px;padding:7px 10px;border:1px solid rgba(255,224,109,.26);border-radius:13px;background:rgba(5,12,25,.72);text-align:center;box-shadow:0 0 20px rgba(255,224,109,.08)}
 #flowChain.show{display:block}
 .flowLabel{font-size:8px;font-weight:1000;letter-spacing:.22em;color:rgba(255,224,109,.75)}
@@ -158,6 +162,7 @@ button{font:inherit;border:0}
 .flowMeter{height:4px;margin-top:5px;border-radius:999px;background:rgba(255,224,109,.12);overflow:hidden}
 .flowMeter i{display:block;width:0;height:100%;border-radius:999px;background:linear-gradient(90deg,var(--cyan),var(--gold),#fff5bf);box-shadow:0 0 10px var(--gold);transition:width .12s linear}
 @keyframes railSurge{from{filter:brightness(1)}to{filter:brightness(1.65)}}
+@keyframes dialogueReveal{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
 @keyframes heartShock{0%,100%{transform:scale(1)}50%{transform:scale(1.52)}}
 .railTag{font-size:9px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;width:42px}
 .railTag.you{color:var(--cyan)} .railTag.foe{color:#ff9ab1;text-align:right}
@@ -176,7 +181,7 @@ button{font:inherit;border:0}
 .juice{text-align:right;color:var(--gold);font-weight:950}
 .juice small{display:block;font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,224,109,.72)}
 #board{width:min(100%,360px);aspect-ratio:1;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr);gap:7px;padding:8px;border-radius:20px;background:rgba(103,226,255,.07);border:1px solid rgba(139,246,255,.16);position:relative}
-.tile{position:relative;border-radius:15px;background:linear-gradient(145deg,rgba(29,75,102,.98),rgba(8,24,46,.98));border:1px solid rgba(139,246,255,.2);box-shadow:0 4px 9px rgba(0,0,0,.2),0 0 12px rgba(74,168,255,.06) inset;overflow:hidden}
+.tile{position:relative;border-radius:15px;background:radial-gradient(circle at 10% 10%,rgba(255,224,109,.48) 0 2px,transparent 3px),radial-gradient(circle at 90% 10%,rgba(255,224,109,.48) 0 2px,transparent 3px),radial-gradient(circle at 10% 90%,rgba(255,224,109,.38) 0 2px,transparent 3px),radial-gradient(circle at 90% 90%,rgba(255,224,109,.38) 0 2px,transparent 3px),linear-gradient(145deg,rgba(44,91,112,.98),rgba(8,24,46,.98));border:2px solid rgba(205,171,91,.42);box-shadow:0 4px 9px rgba(0,0,0,.28),0 0 0 2px rgba(139,246,255,.08) inset,0 0 16px rgba(74,168,255,.08) inset;overflow:hidden}
 .tile.blank{background:rgba(3,10,23,.72);border-style:dashed;border-color:rgba(255,224,109,.58);box-shadow:0 0 18px rgba(255,224,109,.18) inset,0 0 16px rgba(255,224,109,.11)}
 .tile.blank::after{content:"OPEN";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:rgba(255,224,109,.9);font-size:11px;font-weight:950;letter-spacing:.16em;text-shadow:0 0 12px rgba(255,224,109,.85)}
 .tile.movable{border-color:rgba(255,224,109,.62);box-shadow:0 0 15px rgba(255,224,109,.14),0 4px 9px rgba(0,0,0,.2)}
@@ -186,7 +191,7 @@ button{font:inherit;border:0}
 .guideTag{position:absolute;left:50%;bottom:6px;z-index:5;transform:translateX(-50%);padding:2px 6px;border-radius:999px;background:rgba(255,224,109,.94);color:#071021;font-size:8px;font-weight:1000;letter-spacing:.14em}
 .hintBadge{position:absolute;right:6px;bottom:6px;z-index:7;display:flex;width:21px;height:21px;align-items:center;justify-content:center;border-radius:50%;background:#fff1a0;color:#071021;font-size:11px;font-weight:1000;box-shadow:0 0 13px rgba(255,224,109,.82)}
 .pipe{position:absolute;inset:0}
-.pipe::before,.pipe::after{content:"";position:absolute;background:linear-gradient(90deg,#a9f9ff,#65caff);box-shadow:0 0 8px rgba(139,246,255,.76)}
+.pipe::before,.pipe::after{content:"";position:absolute;background:linear-gradient(90deg,#d8a64d 0 18%,#bffaff 28% 72%,#d8a64d 82% 100%);border:1px solid rgba(255,224,109,.52);box-shadow:0 0 8px rgba(139,246,255,.76),0 0 0 3px rgba(110,61,20,.22)}
 .pipe.lr::before{left:0;right:0;top:43%;height:14%;border-radius:999px}
 .pipe.ud::before{top:0;bottom:0;left:43%;width:14%;border-radius:999px}
 .pipe.ld::before,.pipe.ul::before,.pipe.rd::before,.pipe.ur::before{left:43%;width:14%;top:43%;bottom:0;border-radius:999px}
@@ -207,7 +212,10 @@ button{font:inherit;border:0}
 .rivalTerminalState{color:rgba(255,216,109,.86);font-size:9px}
 .rivalDock{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:7px}
 .rivalAvatarDock{position:relative;width:100%;height:61px}
-.rivalAvatar{position:absolute;left:50%;bottom:0;width:34px;height:56px;transform:translateX(-50%);opacity:1;filter:drop-shadow(0 0 9px rgba(255,114,144,.72));transition:opacity .28s ease,transform .42s ease}
+.rivalAvatar{position:absolute;left:50%;bottom:0;width:58px;height:58px;transform:translateX(-50%);opacity:1;filter:drop-shadow(0 0 9px rgba(255,114,144,.72));transition:opacity .28s ease,transform .42s ease}
+.rivalAvatar.model{background-image:linear-gradient(180deg,rgba(4,10,23,.02),rgba(4,10,23,.5)),url("assets/concepts/noderunner-lineup.png");background-size:500% auto;background-position:var(--portrait-x,50%) center;background-repeat:no-repeat}
+.rivalAvatar.model .rivalHead,.rivalAvatar.model .rivalCore,.rivalAvatar.model .rivalArm,.rivalAvatar.model .rivalLeg,.rivalAvatar.model .rivalFaceSpark{display:none}
+.rivalAvatar.avatar-1000{--portrait-x:0%}.rivalAvatar.avatar-3200{--portrait-x:50%}.rivalAvatar.avatar-3600{--portrait-x:75%}.rivalAvatar.avatar-4000{--portrait-x:100%}
 .rivalHead{position:absolute;left:9px;top:0;width:16px;height:16px;border:2px solid #ffd3dc;border-radius:50%;background:rgba(255,114,144,.26)}
 .rivalCore{position:absolute;left:15px;top:17px;width:4px;height:22px;border-radius:999px;background:#ffd3dc;box-shadow:0 0 8px rgba(255,114,144,.8)}
 .rivalArm{position:absolute;top:20px;width:19px;height:3px;border-radius:999px;background:#ffd3dc;transform-origin:center}
@@ -350,8 +358,10 @@ button{font:inherit;border:0}
     <div id="lessonRail"><i>◀</i><i>▶</i><i>▲</i><i>▼</i><i>⚡</i><i>▣</i></div>
     <div id="rivalRail">
       <span class="railTag you">3000</span>
-      <div class="rail"><span id="playerFill" style="width:0%"></span></div>
-      <div class="rail"><span id="rivalFill" style="width:0%"></span></div>
+      <div class="raceTimeline">
+        <i id="playerMarker" class="racerMarker" style="left:0%"></i>
+        <i id="rivalMarker" class="racerMarker" style="left:0%"></i>
+      </div>
       <span class="railTag foe" id="foeRail">3200</span>
     </div>
     <div id="flowChain">
@@ -389,7 +399,7 @@ button{font:inherit;border:0}
         <div class="rivalTerminalTop"><span id="rivalTerminalVersion">3200</span><span id="rivalTerminalState" class="rivalTerminalState">=</span></div>
         <div class="rivalDock">
           <div class="rivalAvatarDock">
-            <div id="rivalTerminalAvatar" class="rivalAvatar">
+            <div id="rivalTerminalAvatar" class="rivalAvatar model avatar-3200">
               <i class="rivalHead"></i><i class="rivalCore"></i>
               <i class="rivalArm a"></i><i class="rivalArm b"></i>
               <i class="rivalLeg a"></i><i class="rivalLeg b"></i>
@@ -464,8 +474,10 @@ const rivalTerminalState = document.getElementById('rivalTerminalState');
 const rivalMiniBoard = document.getElementById('rivalMiniBoard');
 const rivalCableFill = document.getElementById('rivalCableFill');
 const rivalSparkEls = [...document.querySelectorAll('#rivalSparks i')];
-const playerFill = document.getElementById('playerFill');
-const rivalFill = document.getElementById('rivalFill');
+const rivalTerminalAvatar = document.getElementById('rivalTerminalAvatar');
+const playerMarker = document.getElementById('playerMarker');
+const rivalMarker = document.getElementById('rivalMarker');
+const briefBtn = document.getElementById('briefBtn');
 const statusEl = document.getElementById('status');
 const lessonRail = document.getElementById('lessonRail');
 const lessonRailEls = [...document.querySelectorAll('#lessonRail i')];
@@ -522,6 +534,7 @@ const SPRITES = {
   coach:loadSprite('assets/sprites/runtime/noderunner-1000-actions.png'),
   rivals:loadSprite('assets/sprites/runtime/rivals-run.png'),
   obstacles:loadSprite('assets/sprites/runtime/electromechanical-obstacles.png'),
+  slideGate:loadSprite('assets/sprites/runtime/clear-slide-gate.png'),
   world:loadSprite('assets/backgrounds/nodewazzle-raceway-title.png')
 };
 SPRITES.world.addEventListener('load',rebuildWorldBackdrop);
@@ -562,6 +575,8 @@ let dialogueTimer=0;
 let dialogueMin=0;
 let dialogueResume='race';
 let briefMode='duel';
+let briefLines=[];
+let briefLineIndex=0;
 let tutorialMode=false;
 let tutorialResult=false;
 let tutorialStep=0;
@@ -778,12 +793,29 @@ function showCoachArcDialogue(){
 function escapeBrief(text=''){
   return String(text).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 }
-function renderBriefConversation(lines){
-  briefStory.innerHTML=lines.map(line=>`
+function renderBriefLine(){
+  const line=briefLines[briefLineIndex];
+  briefStory.innerHTML=line?`
     <div class="roundLine ${line.role}">
       <div class="roundHead model model-${escapeBrief(line.version)}"><span>${escapeBrief(line.version)}</span></div>
       <div class="roundBubble"><span class="roundSpeaker">Noderunner ${escapeBrief(line.version)}</span>${escapeBrief(line.text)}</div>
-    </div>`).join('');
+    </div>`:'';
+  briefBtn.textContent=briefLineIndex<briefLines.length-1?'Continue':briefMode==='tutorial'?'Train':'Run the wire';
+}
+function setBriefConversation(lines){
+  briefLines=lines;
+  briefLineIndex=0;
+  renderBriefLine();
+}
+function advanceBriefing(){
+  ensureAudio();
+  if(briefLineIndex<briefLines.length-1){
+    briefLineIndex++;
+    renderBriefLine();
+    tone(380,.055,'triangle',.014,80);
+    return;
+  }
+  briefMode==='tutorial'?startTutorial():startRace();
 }
 function setStatus(text,dur=1.2){
   statusEl.textContent=text;
@@ -806,11 +838,10 @@ function showTutorialBriefing(){
   briefMode='tutorial'; state='briefing'; showScreen(briefing); hud.classList.remove('show'); puzzleLayer.classList.remove('show');
   document.getElementById('briefKicker').textContent='ROUND 01 / 04 · TRAINING WIRE';
   document.getElementById('briefTitle').textContent='1000  +  3000';
-  renderBriefConversation([
+  setBriefConversation([
     {role:'mentor',version:'1000',text:COACH.intro},
     {role:'player',version:'3000',text:COACH.reply}
   ]);
-  document.getElementById('briefBtn').textContent='Train';
   switchMusic('between');
 }
 function showBriefing(){
@@ -818,17 +849,16 @@ function showBriefing(){
   currentFoe=FOES[foeIndex];
   document.getElementById('briefKicker').textContent=`ROUND ${String(foeIndex+2).padStart(2,'0')} / 04 · WIRE DUEL`;
   document.getElementById('briefTitle').textContent=`3000  VS  ${currentFoe.version}`;
-  renderBriefConversation([
+  setBriefConversation([
     {role:'foe',version:currentFoe.version,text:currentFoe.intro},
     {role:'player',version:'3000',text:currentFoe.reply}
   ]);
-  document.getElementById('briefBtn').textContent='Run the wire';
   switchMusic('between');
 }
 document.getElementById('startBtn').onclick=()=>{ ensureAudio(); tone(170,.22,'sawtooth',.025,430); showCrawl(); };
 document.getElementById('crawlSkip').onclick=()=>{ ensureAudio(); tone(420,.08,'triangle',.024,180); finishCrawl(); };
 crawlText.addEventListener('animationend',()=>finishCrawl());
-document.getElementById('briefBtn').onclick=()=>{ ensureAudio(); briefMode==='tutorial'?startTutorial():startRace(); };
+briefBtn.onclick=advanceBriefing;
 document.getElementById('resultBtn').onclick=()=>{
   if(tutorialResult){ tutorialResult=false; showBriefing(); return; }
   if(foeIndex>=FOES.length){ foeIndex=0; save(); showScreen(title); state='title'; return; }
@@ -851,6 +881,7 @@ function startTutorial(){
   tutorialPuzzleDemoTimer=0; tutorialPuzzleUnlocked=false; coachTerminalPath=[]; coachTerminalStep=-1;
   currentFoe=COACH;
   state='race'; showScreen(null); hud.classList.add('show'); puzzleLayer.classList.remove('show');
+  rivalRail.hidden=false;
   resetRunState();
   coachLane=1; coachLaneFloat=1; coachJump=0; coachJumpVel=0; coachDuck=0;
   foeName.textContent='WITH 1000'; foeRail.textContent='1000';
@@ -861,6 +892,7 @@ function startTutorial(){
 function startRace(){
   tutorialMode=false; lessonRail.classList.remove('show');
   state='race'; showScreen(null); hud.classList.add('show'); puzzleLayer.classList.remove('show');
+  rivalRail.hidden=false;
   currentFoe=FOES[foeIndex];
   resetRunState();
   rivalDistance=currentFoe.lead;
@@ -887,13 +919,17 @@ function generateObstacles(){
         obstacles.push({d:p,l:Math.floor(rand()*3),type:'spark',hit:false});
       }else if((hard && r>.68)||(arc>0 && r>.86)){
         const safe=Math.floor(rand()*3);
-        for(let l=0;l<3;l++) if(l!==safe) obstacles.push({d:p,l,type:rand()<.48?'low':rand()<.58?'high':'block',hit:false});
+        for(let l=0;l<3;l++) if(l!==safe) obstacles.push({d:p,l,type:rand()<.58?'low':'block',hit:false});
       }else{
         const obstacleLane=Math.floor(rand()*3);
         obstacles.push({d:p,l:obstacleLane,type:r<.4?'block':r<.7?'low':'high',hit:false});
+        if(r>=.7){
+          p+=gap+rand()*15;
+          continue;
+        }
         if(rand()<.2){
           const secondLane=(obstacleLane+1+Math.floor(rand()*2))%3;
-          obstacles.push({d:p+2,l:secondLane,type:rand()<.5?'low':'high',hit:false});
+          obstacles.push({d:p+2,l:secondLane,type:rand()<.55?'low':'block',hit:false});
         }
       }
       p+=gap+rand()*15;
@@ -1176,13 +1212,15 @@ function updateRival(dt){
 function setClassName(el,value){if(el.className!==value)el.className=value;}
 function setText(el,value){if(el.textContent!==value)el.textContent=value;}
 function setWidth(el,value){if(el.style.width!==value)el.style.width=value;}
+function setLeft(el,value){if(el.style.left!==value)el.style.left=value;}
 function updateHud(){
   const playerRatio=tutorialMode&&Number.isFinite(tutorialGateDistance)?Math.min(1,distance/tutorialGateDistance):Math.min(1,distance/TOTAL_DISTANCE);
-  setWidth(playerFill,`${(playerRatio*100).toFixed(3)}%`);
-  setWidth(rivalFill,tutorialMode?'0%':`${Math.min(100,rivalDistance/TOTAL_DISTANCE*100).toFixed(3)}%`);
+  setLeft(playerMarker,`${(2+playerRatio*96).toFixed(3)}%`);
+  setLeft(rivalMarker,tutorialMode?'2%':`${(2+Math.min(1,rivalDistance/TOTAL_DISTANCE)*96).toFixed(3)}%`);
+  rivalMarker.hidden=tutorialMode;
   dots.forEach((d,i)=>setClassName(d,'dot'+(tutorialMode?(i===0?' on':''):(i<completedPuzzles?' done':i===currentArc?' on':''))));
-  setClassName(playerFill,boost>0?'surge':'');
-  setClassName(rivalFill,!tutorialMode&&rivalBoost>0?'surge':'');
+  setClassName(playerMarker,'racerMarker'+(boost>0?' surge':''));
+  setClassName(rivalMarker,`racerMarker foe-${currentFoe.version}${!tutorialMode&&rivalBoost>0?' surge':''}`);
   setClassName(rivalRail,!tutorialMode&&pressureVisual>.48?'pressure':'');
   setText(sparkState,sparkHeart<=0?'✕':dizzy>0?'⚡':boost>0?'⚡ ⚡ ⚡':'⚡');
   sparkHeartEls.forEach((el,i)=>setClassName(el,i<sparkHeart?'on':'off'));
@@ -1250,6 +1288,7 @@ function updateTwinTerminal(force=false){
   if(status.mode==='escaped' && now<rivalDepartureUntil)visualMode='departing';
   rivalTerminal.className='rivalTerminal '+visualMode;
   rivalTerminalVersion.textContent=currentFoe.version;
+  rivalTerminalAvatar.className=`rivalAvatar model avatar-${currentFoe.version}`;
   rivalTerminalState.textContent=status.mode==='waiting'?'=':status.mode==='solving'?'⚡':status.mode==='charging'?'⚡⚡':'→';
   if(!rivalTerminalPath.length)rivalTerminalPath=buildRivalTerminalPath(puzzle?.initialState||GOAL,puzzle?.goal||GOAL);
   const maxStep=Math.max(0,rivalTerminalPath.length-1);
@@ -1372,6 +1411,7 @@ function startCoachTerminalDemo(){
   rivalTerminalPath=coachTerminalPath.slice(); rivalTerminalStep=-1;
   puzzleLayer.classList.add('coachDemo');
   rivalTerminal.className='rivalTerminal coach arriving';
+  rivalTerminalAvatar.className='rivalAvatar model avatar-1000';
   rivalTerminalVersion.textContent='1000'; rivalTerminalState.textContent='⚡';
   rivalCableFill.style.width='0%';
   rivalSparkEls.forEach(spark=>spark.className='');
@@ -1828,6 +1868,13 @@ function drawTrack(t){
     const y=lerp(anchorY,vanY,z);
     const x=laneX(o.l,z,reverse);
     const scale=lerp(1.12,.18,z);
+    if(o.tutorial&&o.type==='high'){
+      if(o.l!==1)continue;
+      const fullGateWidth=Math.abs(laneX(2,z,reverse)-laneX(0,z,reverse))+112*scale;
+      drawObstacleShadow(o,W*.5,y,scale,rel,t);
+      drawObstacle(o,W*.5,y,scale,rel,t,fullGateWidth);
+      continue;
+    }
     drawObstacleShadow(o,x,y,scale,rel,t);
     drawObstacle(o,x,y,scale,rel,t);
   }
@@ -1912,7 +1959,7 @@ function drawObstacleShadow(o,x,y,s,rel,t){
   }
   ctx.restore();
 }
-function drawObstacle(o,x,y,s,rel,t){
+function drawObstacle(o,x,y,s,rel,t,gateWidth=0){
   ctx.save();ctx.translate(x,y);ctx.scale(s,s);
   const urgent=rel<135;
   if(o.type==='spark'){
@@ -1924,6 +1971,12 @@ function drawObstacle(o,x,y,s,rel,t){
     ctx.closePath();ctx.fill();ctx.restore();return;
   }
   ctx.shadowBlur=18;ctx.shadowColor='#ff7290';
+  const slideGateWidth=gateWidth?gateWidth/s:164;
+  if(o.type==='high'&&drawAtlasFrame(SPRITES.slideGate,1,1,0,0,0,18,slideGateWidth,92,.91)){
+    if(urgent)drawActionIcon('▼',0,-62);
+    ctx.restore();
+    return;
+  }
   const atlasCell=o.type==='low'?0:o.type==='high'?1:2;
   const atlasSize=o.type==='low'?108:o.type==='high'?122:92;
   const atlasAnchor=o.type==='high'?.82:.76;

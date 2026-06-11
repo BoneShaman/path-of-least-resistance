@@ -16,6 +16,8 @@ Each duel alternates between:
 - Competitive shortest-path sliding puzzles
 - Three race arcs against a physical rival
 
+Both racers share one checkpoint timeline with front-facing model portraits, so the chase can be read at a glance during both running and OHM puzzles. Story exchanges reveal one speaker at a time instead of presenting the entire conversation simultaneously.
+
 The complete campaign faces Noderunners `3200`, `3600`, and `4000`. Each rival runs three race arcs, for a focused nine-leg campaign. Winning is not about destroying them. It is about reconnecting the kindness their optimization removed.
 
 ## Play
@@ -52,6 +54,8 @@ Clean actions build a Flow chain:
 - Passing close to lane blockers
 
 Flow temporarily raises speed. Continue moving cleanly to preserve it. A collision breaks the chain.
+
+Raised electromechanical gates have a visibly empty opening for 3000's belly-slide. The standing silhouette intersects the crossbar; the slide silhouette and collision state clear beneath it.
 
 ## OHM Gate Assistance
 
