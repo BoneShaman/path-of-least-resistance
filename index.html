@@ -370,7 +370,7 @@ button{font:inherit;border:0}
       <div id="reactionPortrait" class="reactionPortrait model-3200"><span id="reactionVersion">3200</span></div>
       <div><div id="reactionName" class="reactionName">Noderunner 3200</div><div id="reactionText" class="reactionText">Still here.</div></div>
     </div>
-    <div id="lessonRail"><i>◀</i><i>▶</i><i>▲</i><i>▼</i><i>⚡</i><i>▣</i></div>
+    <div id="lessonRail"><i>◀</i><i>▶</i><i>▲</i><i>▼</i><i>⚡</i><i>↔</i><i>▣</i></div>
     <div id="rivalRail">
       <span class="railTag you">3000</span>
       <div class="raceTimeline">
@@ -608,6 +608,8 @@ let tutorialStep=0;
 let tutorialBarrierAt=0;
 let tutorialGateDistance=Infinity;
 let tutorialGroup=0;
+let tutorialDodges=0;
+let tutorialDodgeLane=1;
 let tutorialDemoTimer=0;
 let tutorialReady=false;
 let tutorialPuzzleDemoTimer=0;
@@ -1012,7 +1014,7 @@ function updateLessonRail(){
   lessonRailEls.forEach((el,i)=>el.className=i<tutorialStep?'done':i===tutorialStep?'on':'');
 }
 function startTutorial(){
-  tutorialMode=true; tutorialResult=false; tutorialStep=0; tutorialBarrierAt=0; tutorialGateDistance=Infinity; tutorialGroup=0;
+  tutorialMode=true; tutorialResult=false; tutorialStep=0; tutorialBarrierAt=0; tutorialGateDistance=Infinity; tutorialGroup=0; tutorialDodges=0; tutorialDodgeLane=1;
   tutorialDemoTimer=.34; tutorialReady=false;
   tutorialPuzzleDemoTimer=0; tutorialPuzzleUnlocked=false; coachTerminalPath=[]; coachTerminalStep=-1;
   currentFoe=COACH;
@@ -1089,6 +1091,32 @@ function spawnTutorialSpark(ahead=190){
   playerObstacleCursor=0;
   for(let l=0;l<3;l++)obstacles.push({d:tutorialBarrierAt,l,type:'spark',hit:false,cleared:false,tutorial:true,group:tutorialGroup});
 }
+function spawnTutorialDodge(ahead=220){
+  const lanes=[1,0];
+  const safeLanes=[0,2];
+  tutorialGroup++;
+  tutorialDodgeLane=lanes[tutorialDodges]??1;
+  tutorialBarrierAt=distance+ahead;
+  coachLane=safeLanes[tutorialDodges]??1;
+  obstacles=obstacles.filter(o=>!o.tutorial);
+  playerObstacleCursor=0;
+  obstacles.push({d:tutorialBarrierAt,l:tutorialDodgeLane,type:'block',hit:false,cleared:false,tutorial:true,group:tutorialGroup});
+  setStatus(`DODGE BOX ${tutorialDodges+1} / 2`,1.05);
+}
+function finishTutorialDodge(){
+  tutorialDodges++;
+  tone(430+tutorialDodges*45,.07,'triangle',.018,120);
+  if(tutorialDodges<2){
+    spawnTutorialDodge(205);
+    return;
+  }
+  tutorialStep=6;
+  updateLessonRail();
+  obstacles=[];
+  tutorialGateDistance=distance+330;
+  coachLane=1;
+  setStatus('OHM GATE · STOP AND REROUTE',1.2);
+}
 function finishTutorialAction(kind,group){
   obstacles.forEach(o=>{if(o.group===group)o.hit=true;});
   if(tutorialStep===2 && kind==='jump'){
@@ -1096,7 +1124,7 @@ function finishTutorialAction(kind,group){
   }else if(tutorialStep===3 && kind==='duck'){
     tutorialStep=4; updateLessonRail(); spawnTutorialSpark(205); setStatus('⚡',.82);
   }else if(tutorialStep===4 && kind==='spark'){
-    tutorialStep=5; updateLessonRail(); obstacles=[]; tutorialGateDistance=distance+330; setStatus('▣',.85);
+    tutorialStep=5; tutorialDodges=0; updateLessonRail(); spawnTutorialDodge(235);
   }
 }
 function checkTutorialLaneAction(){
@@ -1257,7 +1285,10 @@ function updateTutorialRace(dt){
     if(tutorialStep===3)spawnTutorialBarrier('high',245);
     if(tutorialStep===4)spawnTutorialSpark(190);
   }
-  if(tutorialStep===5 && distance>=tutorialGateDistance){
+  if(tutorialStep===5 && distance>tutorialBarrierAt+18){
+    finishTutorialDodge();
+  }
+  if(tutorialStep===6 && distance>=tutorialGateDistance){
     distance=tutorialGateDistance; enterOhmGate(0);
   }
   updateHud();
@@ -1569,10 +1600,14 @@ function collide(){
       continue;
     }
     if(tutorialMode&&o.tutorial){
+      if(o.type==='block'&&tutorialStep===5){
+        damageSpark();
+        return;
+      }
       obstacles.forEach(item=>{if(item.group===o.group)item.hit=true;});
       if(o.type==='low')spawnTutorialBarrier('low',145);
       else if(o.type==='high')spawnTutorialBarrier('high',155);
-      setStatus(o.type==='low'?'JUMP · TRY AGAIN':'BELLY SLIDE · TRY AGAIN',.9);
+      setStatus(o.type==='low'?'JUMP · TRY AGAIN':'BELLY SLIDE · TRY AGAIN',1.15);
       tone(145,.1,'square',.016,30);
       return;
     }
@@ -2228,6 +2263,16 @@ function drawTutorialCue(anchorY,vanY,t){
     y=Math.max(190,lerp(anchorY,vanY,z)-68*scale);
   }
   if(tutorialStep===4)icon='⚡';
+  if(tutorialStep===5){
+    icon=coachLane<tutorialDodgeLane?'◀':'▶';
+    label='DODGE';
+    const rel=Math.max(0,tutorialBarrierAt-distance);
+    const z=Math.max(0,Math.min(1,rel/350));
+    const scale=lerp(1.12,.18,z);
+    x=laneX(tutorialDodgeLane,z,false);
+    y=Math.max(190,lerp(anchorY,vanY,z)-64*scale);
+  }
+  if(tutorialStep===6){icon='▣';label='OHM GATE';}
   if(!icon)return;
   const pulse=1+.1*Math.sin(t*7);
   ctx.save();ctx.translate(x,y);ctx.scale(pulse,pulse);
@@ -2253,7 +2298,11 @@ function drawAtlasFrame(image,columns,rows,column,row,x,y,width,height,anchor=.9
   return true;
 }
 function drawCoach(anchorY,vanY,reverse,t){
-  const rel=state==='collapse'?22:92,z=Math.max(.05,Math.min(.42,rel/350));
+  let rel=state==='collapse'?22:92;
+  if(tutorialStep===6&&Number.isFinite(tutorialGateDistance)){
+    rel=Math.min(92,Math.max(18,tutorialGateDistance-distance+8));
+  }
+  const z=Math.max(.05,Math.min(.42,rel/350));
   const y=lerp(anchorY,vanY,z),x=laneX(coachLaneFloat,z,reverse),scale=lerp(.98,.62,z);
   drawCoachRunner(x,y,coachJump,coachDuck,t,reverse,scale);
 }
