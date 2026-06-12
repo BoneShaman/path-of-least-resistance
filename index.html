@@ -641,6 +641,7 @@ let rivalDuck=0;
 let rivalBoost=0;
 let rivalBoostPower=1.34;
 let rivalScriptStage=0;
+let rivalReclaiming=false;
 let rivalWasAhead=true;
 let rivalReactionCooldown=0;
 let rescueMode=false;
@@ -974,7 +975,7 @@ document.getElementById('resultBtn').onclick=()=>{
 };
 
 function resetRunState(){
-  distance=0; rivalDistance=0; rivalPause=.5; rivalPauseTotal=.5; rivalReleaseDelay=0; rivalCheckpoint=0; rivalTerminalMode='waiting'; rivalTerminalBeat=-1; rivalTerminalStep=-1; rivalTerminalPath=[]; rivalArrivalUntil=0; rivalDepartureUntil=0; rivalLane=1; rivalLaneFloat=1; rivalJump=0; rivalJumpVel=0; rivalDuck=0; rivalBoost=0; rivalBoostPower=1.34; rivalScriptStage=0; rivalWasAhead=true; rivalReactionCooldown=0; rescueMode=false; playerPause=false; completedPuzzles=0; currentArc=0; reverseCueTimer=0;
+  distance=0; rivalDistance=0; rivalPause=.5; rivalPauseTotal=.5; rivalReleaseDelay=0; rivalCheckpoint=0; rivalTerminalMode='waiting'; rivalTerminalBeat=-1; rivalTerminalStep=-1; rivalTerminalPath=[]; rivalArrivalUntil=0; rivalDepartureUntil=0; rivalLane=1; rivalLaneFloat=1; rivalJump=0; rivalJumpVel=0; rivalDuck=0; rivalBoost=0; rivalBoostPower=1.34; rivalScriptStage=0; rivalReclaiming=false; rivalWasAhead=true; rivalReactionCooldown=0; rescueMode=false; playerPause=false; completedPuzzles=0; currentArc=0; reverseCueTimer=0;
   lane=1; laneFloat=1; jump=0; jumpVel=0; duck=0; dizzy=0; sparkHeart=3; sparkHitCooldown=0; collapseTimer=0; boost=0; boostVisual=0; flowChain=0; flowWindow=0; bestFlowChain=0; surgeKick=0; pressureVisual=0; trailAccumulator=0; pressureToneCooldown=0; flash=0; shake=0;
   gateIntroTimer=0; currentGate=0; gateWarned=[false,false,false];
   reactionTimer=0; reactionEl.classList.remove('on');
@@ -1294,6 +1295,14 @@ function rivalHasEscaped(){
 }
 function updateRival(dt){
   rivalBoost=Math.max(0,rivalBoost-dt);
+  if(rivalReclaiming){
+    if(rivalDistance-distance>=42){
+      rivalReclaiming=false;
+      rivalBoost=0;
+      rivalBoostPower=1.34;
+      showReaction('3600','Lead restored. Calculation complete.',1.65);
+    }else rivalBoostPower=1.9+Math.min(1.8,Math.max(0,distance-rivalDistance)/450);
+  }
   if(rivalPause>0){
     rivalPause=Math.max(0,rivalPause-dt);
     if(rivalPause===0 && rivalCheckpoint>0){
@@ -1310,7 +1319,7 @@ function updateRival(dt){
     }
   }
   else if(rivalDistance<TOTAL_DISTANCE){
-    rivalDistance+=currentFoe.speed*(rivalBoost>0?rivalBoostPower:1)*dt;
+    rivalDistance+=currentFoe.speed*(rivalBoost>0||rivalReclaiming?rivalBoostPower:1)*dt;
     const threshold=(rivalCheckpoint+1)*ARC_LENGTH;
     if(rivalCheckpoint<3 && rivalDistance>=threshold){
       rivalDistance=threshold;
@@ -1330,6 +1339,13 @@ function startRivalSurge(text,duration,power){
   burst(W*.5,H*.4,'rose',18);
   tone(210,.12,'sawtooth',.025,260);
 }
+function startRivalReclaim(text){
+  rivalReclaiming=true;
+  rivalBoostPower=1.9+Math.min(1.8,Math.max(0,distance-rivalDistance)/450);
+  showReaction('3600',text,1.9);
+  burst(W*.5,H*.4,'rose',22);
+  tone(210,.14,'sawtooth',.028,310);
+}
 function updateRivalDrama(){
   if(tutorialMode||state==='puzzle'||state==='gateIntro')return;
   const lead=rivalDistance-distance;
@@ -1338,10 +1354,10 @@ function updateRivalDrama(){
     startRivalSurge('PANIC BOOST! You were not meant to catch me.',3.2,1.72);
   }
   if(currentFoe.version==='3600'&&rivalScriptStage<2){
-    const trigger=[980,ARC_LENGTH+1120][rivalScriptStage];
-    if(distance>trigger&&lead<45){
+    const trigger=[980,ARC_LENGTH+120][rivalScriptStage];
+    if(distance>trigger&&lead<45&&rivalPause<=0&&rivalReleaseDelay<=0){
       rivalScriptStage++;
-      startRivalSurge(rivalScriptStage===1?'CALCULATED SURGE. Lead restored.':'SECOND SURGE. Your persistence is inefficient.',3.4,1.62);
+      startRivalReclaim(rivalScriptStage===1?'CALCULATED SURGE. Reclaiming lead.':'SECOND SURGE. Recalculating your advantage.');
     }
   }
   const ahead=lead>0;
@@ -1361,7 +1377,7 @@ function updateHud(){
   rivalMarker.hidden=tutorialMode;
   dots.forEach((d,i)=>setClassName(d,'dot'+(tutorialMode?(i===0?' on':''):(i<completedPuzzles?' done':i===currentArc?' on':''))));
   setClassName(playerMarker,'racerMarker'+(boost>0?' surge':''));
-  setClassName(rivalMarker,`racerMarker foe-${currentFoe.version}${!tutorialMode&&rivalBoost>0?' surge':''}${rescueMode?' rescue':''}`);
+  setClassName(rivalMarker,`racerMarker foe-${currentFoe.version}${!tutorialMode&&(rivalBoost>0||rivalReclaiming)?' surge':''}${rescueMode?' rescue':''}`);
   setClassName(rivalRail,!tutorialMode&&pressureVisual>.48?'pressure':'');
   setText(sparkState,sparkHeart<=0?'✕':dizzy>0?'⚡':boost>0?'⚡ ⚡ ⚡':'⚡');
   sparkHeartEls.forEach((el,i)=>setClassName(el,i<sparkHeart?'on':'off'));
@@ -2263,7 +2279,7 @@ function drawRival(anchorY,vanY,reverse,t){
     scale=1.03+.12*chase;
   }
   const x=laneX(rivalLaneFloat,z,reverse);
-  if(rivalBoost>0)drawRivalTrail(x,y,rivalJump,t,reverse,scale);
+  if(rivalBoost>0||rivalReclaiming)drawRivalTrail(x,y,rivalJump,t,reverse,scale);
   drawRivalShadow(x,y,rivalJump,rivalDuck,rel>=0?scale:scale*.92);
   drawRivalRunner(x,y,rivalJump,rivalDuck,t,reverse,scale);
 }
@@ -2453,6 +2469,8 @@ function renderGameToText(){
       checkpoint:rivalCheckpoint,
       boost:Number(rivalBoost.toFixed(2)),
       scriptStage:rivalScriptStage,
+      reclaiming:rivalReclaiming,
+      lead:Math.round(rivalDistance-distance),
       reaction:reactionTimer>0?reactionText.textContent:'',
       rescueMode
     },
