@@ -689,6 +689,14 @@ let musicFadeToken=0;
 const musicTracks={};
 let best = loadSave();
 
+for(const [key,src] of Object.entries(MUSIC)){
+  const track=musicTracks[key]=new Audio(src);
+  track.loop=true;
+  track.preload='auto';
+  track.volume=0;
+  track.load();
+}
+
 function loadSave(){
   try { return JSON.parse(localStorage.getItem(SAVE_KEY) || '{"best":0}'); }
   catch { return {best:0}; }
@@ -741,34 +749,53 @@ function rebuildWorldBackdrop(){
   backdropCtx.fillRect(0,0,W,H);
 }
 function ensureAudio(){
-  if(audio || !soundOn) return;
+  if(!soundOn) return;
+  if(audio){
+    if(audio.state==='suspended')audio.resume().catch(()=>{});
+    return;
+  }
   const AC=window.AudioContext||window.webkitAudioContext;
   if(!AC) return;
   audio=new AC();
+  if(audio.state==='suspended')audio.resume().catch(()=>{});
 }
 function switchMusic(key){
-  if(activeMusicKey===key && activeMusic)return;
-  const previous=activeMusic;
+  if(activeMusicKey===key&&activeMusic){
+    if(soundOn&&activeMusic.paused){
+      activeMusic.volume=.26;
+      activeMusic.play().catch(()=>{});
+    }
+    return;
+  }
   activeMusicKey=key;
   activeMusic=musicTracks[key];
-  if(!activeMusic){
-    activeMusic=musicTracks[key]=new Audio(MUSIC[key]);
-    activeMusic.loop=true;
-    activeMusic.preload='auto';
-    activeMusic.volume=0;
-  }
   const next=activeMusic;
   const token=++musicFadeToken;
   const started=performance.now();
   const duration=720;
-  if(soundOn)next.play().catch(()=>{});
+  const startingVolumes=new Map(Object.values(musicTracks).map(track=>[track,track.volume]));
+  if(soundOn){
+    next.muted=false;
+    next.volume=.001;
+    next.play().catch(()=>{
+      if(token===musicFadeToken)next.volume=0;
+    });
+  }
   function fade(now){
     if(token!==musicFadeToken)return;
     const mix=Math.min(1,(now-started)/duration);
-    if(previous&&previous!==next)previous.volume=.26*(1-mix);
-    next.volume=soundOn ? .26*mix : 0;
+    for(const track of Object.values(musicTracks)){
+      const from=startingVolumes.get(track)||0;
+      const target=soundOn&&track===next ? .26 : 0;
+      track.volume=from+(target-from)*mix;
+    }
     if(mix<1){requestAnimationFrame(fade);return;}
-    if(previous&&previous!==next){previous.pause();previous.currentTime=0;previous.volume=0;}
+    for(const track of Object.values(musicTracks)){
+      if(track===next)continue;
+      track.pause();
+      track.currentTime=0;
+      track.volume=0;
+    }
   }
   requestAnimationFrame(fade);
 }
@@ -786,6 +813,25 @@ function tone(freq=440,dur=.08,type='sine',gain=.035,slide=0){
 }
 function chord(){
   [180,260,390].forEach((f,i)=>setTimeout(()=>tone(f,.24,'triangle',.028,170),i*48));
+}
+function playMagicStart(){
+  ensureAudio();
+  if(!audio||!soundOn)return;
+  const now=audio.currentTime;
+  [523.25,659.25,783.99,1046.5].forEach((freq,index)=>{
+    const oscillator=audio.createOscillator();
+    const gain=audio.createGain();
+    const start=now+index*.055;
+    oscillator.type=index===3?'sine':'triangle';
+    oscillator.frequency.setValueAtTime(freq,start);
+    oscillator.frequency.exponentialRampToValueAtTime(freq*1.018,start+.22);
+    gain.gain.setValueAtTime(.0001,start);
+    gain.gain.exponentialRampToValueAtTime(index===3?.028:.018,start+.018);
+    gain.gain.exponentialRampToValueAtTime(.0001,start+.34);
+    oscillator.connect(gain);gain.connect(audio.destination);
+    oscillator.start(start);oscillator.stop(start+.36);
+    oscillator.onended=()=>{oscillator.disconnect();gain.disconnect();};
+  });
 }
 soundToggle.onclick=()=>{
   soundOn=!soundOn;
@@ -917,7 +963,7 @@ function showBriefing(){
   ]);
   switchMusic('between');
 }
-document.getElementById('startBtn').onclick=()=>{ ensureAudio(); tone(170,.22,'sawtooth',.025,430); showCrawl(); };
+document.getElementById('startBtn').onclick=()=>{ ensureAudio(); switchMusic('menu'); playMagicStart(); showCrawl(); };
 document.getElementById('crawlSkip').onclick=()=>{ ensureAudio(); tone(420,.08,'triangle',.024,180); finishCrawl(); };
 crawlText.addEventListener('animationend',()=>finishCrawl());
 briefBtn.onclick=advanceBriefing;
@@ -2433,7 +2479,8 @@ function renderGameToText(){
       slowFrames:slowFrameCount
     },
     soundOn,
-    music:activeMusicKey
+    music:activeMusicKey,
+    musicPlaying:Object.entries(musicTracks).filter(([,track])=>!track.paused&&track.volume>.001).map(([key,track])=>({key,volume:Number(track.volume.toFixed(3))}))
   });
 }
 window.render_game_to_text=renderGameToText;
