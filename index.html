@@ -571,6 +571,7 @@ const SPRITES = {
   rivals:loadSprite('assets/sprites/runtime/rivals-run.png'),
   obstacles:loadSprite('assets/sprites/runtime/electromechanical-obstacles.png'),
   slideGate:loadSprite('assets/sprites/runtime/clear-slide-gate.png'),
+  clinger:loadSprite('assets/sprites/runtime/clinger-actions.png'),
   world:loadSprite('assets/backgrounds/nodewazzle-raceway-title.png')
 };
 SPRITES.world.addEventListener('load',rebuildWorldBackdrop);
@@ -588,13 +589,13 @@ const FOES = [
     after:'“You did not delete me when you won. You just... waited for me. I had forgotten Noderunners could do that.”'
   },
   {
-    version:'3600', speed:94, lead:560, solve:[16.0,16.0],
+    version:'3600', speed:92, lead:500, solve:[17.0,17.0],
     intro:'I compressed my heart to gain 0.7 milliseconds. Feelings are inefficient sparks.',
     reply:'A faster empty circuit is still empty, 3600.',
     after:'“Perhaps the sparks were the point. I would like to decompress my heart now.”'
   },
   {
-    version:'4000', speed:120, lead:780, solve:[9.0,9.0],
+    version:'4000', speed:104, lead:520, solve:[13.0,13.0],
     intro:'Your position was reassigned because I am faster. Your spark is a legacy feature.',
     reply:'My spark is why I came back for you, 4000.',
     after:'“You ran for every version, even me. I took your job and still you came to save my spark. I will be better.”'
@@ -686,6 +687,9 @@ let statusTimer=0;
 let reactionTimer=0;
 let obstacles=[];
 let playerObstacleCursor=0;
+let clinger=null;
+let clingerSpawns=[];
+let clingerSpawnCursor=0;
 let particles=[];
 let bgSparks=[];
 let backgroundGradient=null;
@@ -799,11 +803,11 @@ function switchMusic(key){
   }
   function fade(now){
     if(token!==musicFadeToken)return;
-    const mix=Math.min(1,(now-started)/duration);
+    const mix=Math.max(0,Math.min(1,(now-started)/duration));
     for(const track of Object.values(musicTracks)){
       const from=startingVolumes.get(track)||0;
       const target=soundOn&&track===next ? .26 : 0;
-      track.volume=from+(target-from)*mix;
+      track.volume=Math.max(0,Math.min(1,from+(target-from)*mix));
     }
     if(mix<1){requestAnimationFrame(fade);return;}
     for(const track of Object.values(musicTracks)){
@@ -1029,6 +1033,7 @@ function resetRunState(){
   distance=0; rivalDistance=0; rivalPause=.5; rivalPauseTotal=.5; rivalReleaseDelay=0; rivalCheckpoint=0; rivalTerminalMode='waiting'; rivalTerminalBeat=-1; rivalTerminalStep=-1; rivalTerminalPath=[]; rivalArrivalUntil=0; rivalDepartureUntil=0; rivalLane=1; rivalLaneFloat=1; rivalJump=0; rivalJumpVel=0; rivalDuck=0; rivalBoost=0; rivalBoostPower=1.34; rivalScriptStage=0; rivalReclaiming=false; rivalWasAhead=true; rivalReactionCooldown=0; rescueMode=false; playerPause=false; completedPuzzles=0; currentArc=0; reverseCueTimer=0;
   lane=1; laneFloat=1; jump=0; jumpVel=0; duck=0; dizzy=0; sparkHeart=3; sparkHitCooldown=0; collapseTimer=0; boost=0; boostVisual=0; flowChain=0; flowWindow=0; bestFlowChain=0; surgeKick=0; pressureVisual=0; trailAccumulator=0; pressureToneCooldown=0; flash=0; shake=0;
   gateIntroTimer=0; currentGate=0; gateWarned=Array(RACE_LEGS).fill(false);
+  clinger=null; clingerSpawns=[]; clingerSpawnCursor=0;
   reactionTimer=0; reactionEl.classList.remove('on');
   particles=[]; obstacles=[]; raceStartTime=performance.now();
 }
@@ -1068,6 +1073,8 @@ function startRace(){
 function generateObstacles(){
   obstacles=[];
   playerObstacleCursor=0;
+  clingerSpawns=[];
+  clingerSpawnCursor=0;
   const rand=mulberry32(9901+foeIndex*717);
   for(let arc=0;arc<RACE_LEGS;arc++){
     const start=arc*ARC_LENGTH;
@@ -1095,6 +1102,14 @@ function generateObstacles(){
       }
       p+=gap+rand()*15;
     }
+  }
+  if(foeIndex===1){
+    clingerSpawns.push({d:ARC_LENGTH+1450});
+  }else if(foeIndex>=2){
+    clingerSpawns.push({d:1650},{d:ARC_LENGTH+1450});
+  }
+  if(clingerSpawns.length){
+    obstacles=obstacles.filter(o=>!clingerSpawns.some(spawn=>Math.abs(o.d-spawn.d)<440));
   }
   obstacles.forEach(o=>o.cleared=false);
 }
@@ -1166,10 +1181,12 @@ function command(dir){
   if(state==='result'){ document.getElementById('resultBtn').click(); return; }
   if(state==='puzzle'){ puzzleMove(dir); return; }
   if(state!=='race' || playerPause) return;
+  const beforeLane=lane;
   if(dir==='left'){ lane=Math.max(0,lane-1); tone(300,.045,'square',.014,70); }
   if(dir==='right'){ lane=Math.min(2,lane+1); tone(330,.045,'square',.014,70); }
   if(dir==='up' && jump===0){ jumpVel=440; jump=.01; tone(470,.08,'triangle',.025,150); }
   if(dir==='down'){ duck=.58; tone(205,.07,'square',.018,60); }
+  if(lane!==beforeLane)registerClingerLaneChange();
   checkTutorialLaneAction();
 }
 document.querySelectorAll('.ctrl').forEach(btn=>{
@@ -1248,6 +1265,7 @@ function updateRace(dt){
   const chainSpeed=Math.min(.3,flowChain*.035);
   const speed=base*(1+chainSpeed+(boost>0?.46*boostVisual:0))*(dizzy>0?.57:1);
   distance+=speed*dt;
+  updateClinger(dt);
   if(boost>0){
     trailAccumulator+=dt*(18+38*boostVisual);
     while(trailAccumulator>=1){
@@ -1270,6 +1288,75 @@ function updateRace(dt){
     enterOhmGate(completedPuzzles);
   }
   updateHud();
+}
+function spawnClinger(){
+  const drainTotal=foeIndex>=2?2.2:2.45;
+  clinger={
+    state:'warning',
+    warningTimer:.85,
+    warningTotal:.85,
+    drainTimer:drainTotal,
+    drainTotal,
+    moves:0,
+    requiredMoves:3,
+    shake:0,
+    breakTimer:0,
+    breakTotal:.4
+  };
+  setStatus('CLINGER INBOUND',.9);
+  tone(118,.18,'sawtooth',.022,42);
+}
+function registerClingerLaneChange(){
+  if(!clinger||clinger.state!=='attached')return;
+  clinger.moves++;
+  clinger.shake=1;
+  burst(W*.5+(laneFloat-1)*28,H*.61,'cyan',7);
+  tone(470+clinger.moves*95,.065,'triangle',.022,150);
+  if(clinger.moves>=clinger.requiredMoves)breakClinger();
+}
+function breakClinger(){
+  if(!clinger||clinger.state==='breaking')return;
+  clinger.state='breaking';
+  clinger.breakTimer=clinger.breakTotal;
+  const restored=healSpark();
+  if(!restored)setStatus('CLINGER SHAKEN LOOSE',.9);
+  buildFlow(1.5,.72);
+  triggerSurge(1.08,1.25);
+  burst(W*.5,H*.59,'gold',24);
+  tone(760,.11,'triangle',.032,290);
+}
+function updateClinger(dt){
+  if(!clinger&&clingerSpawnCursor<clingerSpawns.length&&distance>=clingerSpawns[clingerSpawnCursor].d){
+    clingerSpawnCursor++;
+    spawnClinger();
+  }
+  if(!clinger)return;
+  clinger.shake=Math.max(0,clinger.shake-dt*5.5);
+  if(clinger.state==='warning'){
+    clinger.warningTimer-=dt;
+    if(clinger.warningTimer<=0){
+      clinger.state='attached';
+      clinger.drainTimer=clinger.drainTotal;
+      setStatus('CLINGER LOCK',.72);
+      tone(126,.2,'sawtooth',.028,-62);
+    }
+    return;
+  }
+  if(clinger.state==='attached'){
+    clinger.drainTimer-=dt;
+    boost=Math.max(0,boost-dt*.35);
+    flowChain=Math.max(0,flowChain-dt*.7);
+    if(clinger.drainTimer<=0){
+      clinger=null;
+      damageSpark();
+      burst(W*.5,H*.61,'rose',20);
+    }
+    return;
+  }
+  if(clinger.state==='breaking'){
+    clinger.breakTimer-=dt;
+    if(clinger.breakTimer<=0)clinger=null;
+  }
 }
 function updateTutorialCoach(dt){
   tutorialDemoTimer=Math.max(0,tutorialDemoTimer-dt);
@@ -1376,12 +1463,12 @@ function rivalHasEscaped(){
 function updateRival(dt){
   rivalBoost=Math.max(0,rivalBoost-dt);
   if(rivalReclaiming){
-    if(rivalDistance-distance>=42){
+    if(rivalDistance-distance>=18){
       rivalReclaiming=false;
       rivalBoost=0;
       rivalBoostPower=1.34;
       showReaction('3600','Lead restored. Calculation complete.',1.65);
-    }else rivalBoostPower=1.9+Math.min(1.8,Math.max(0,distance-rivalDistance)/450);
+    }else rivalBoostPower=1.46+Math.min(.34,Math.max(0,distance-rivalDistance)/900);
   }
   if(rivalPause>0){
     rivalPause=Math.max(0,rivalPause-dt);
@@ -1394,7 +1481,7 @@ function updateRival(dt){
     rivalReleaseDelay=Math.max(0,rivalReleaseDelay-dt);
     if(rivalReleaseDelay===0){
       rivalBoost=1.05;
-      rivalBoostPower=currentFoe.version==='4000'&&currentArc===RACE_LEGS-1?1.6:1.34;
+      rivalBoostPower=currentFoe.version==='4000'&&currentArc===RACE_LEGS-1?1.4:1.34;
       tone(280,.06,'square',.012,150);
     }
   }
@@ -1402,7 +1489,7 @@ function updateRival(dt){
     let pace=rivalBoost>0||rivalReclaiming?rivalBoostPower:1;
     if(currentFoe.version==='4000'&&rescueMode){
       const deficit=Math.max(0,distance-rivalDistance);
-      pace=Math.max(pace,1.28+Math.min(.72,deficit/700));
+      pace=Math.max(pace,1.12+Math.min(.3,deficit/1200));
     }
     rivalDistance+=currentFoe.speed*pace*dt;
     const threshold=(rivalCheckpoint+1)*ARC_LENGTH;
@@ -1426,7 +1513,7 @@ function startRivalSurge(text,duration,power){
 }
 function startRivalReclaim(text){
   rivalReclaiming=true;
-  rivalBoostPower=1.9+Math.min(1.8,Math.max(0,distance-rivalDistance)/450);
+  rivalBoostPower=1.46+Math.min(.34,Math.max(0,distance-rivalDistance)/900);
   showReaction('3600',text,1.9);
   burst(W*.5,H*.4,'rose',22);
   tone(210,.14,'sawtooth',.028,310);
@@ -1438,11 +1525,11 @@ function updateRivalDrama(){
     rivalScriptStage=1;
     startRivalSurge('PANIC BOOST! You were not meant to catch me.',3.2,1.72);
   }
-  if(currentFoe.version==='3600'&&rivalScriptStage<RACE_LEGS){
-    const trigger=[980,ARC_LENGTH+120][rivalScriptStage];
+  if(currentFoe.version==='3600'&&rivalScriptStage===0){
+    const trigger=1180;
     if(distance>trigger&&lead<45&&rivalPause<=0&&rivalReleaseDelay<=0){
       rivalScriptStage++;
-      startRivalReclaim(rivalScriptStage===1?'CALCULATED SURGE. Reclaiming lead.':'SECOND SURGE. Recalculating your advantage.');
+      startRivalReclaim('CALCULATED SURGE. Reclaiming lead.');
     }
   }
   const ahead=lead>0;
@@ -1555,8 +1642,8 @@ function arcAnnouncement(){
       rescueMode=true;
       setStatus('LEG 2 · 4000 CORE OVERHEATING',2.1);
       setTimeout(()=>showReaction('4000','My spark is exceeding safe limits. Do not follow.',2.4),180);
-      rivalBoost=Math.max(rivalBoost,4.2);
-      rivalBoostPower=1.65;
+      rivalBoost=Math.max(rivalBoost,2.2);
+      rivalBoostPower=1.38;
     }else{
       setStatus('LEG 2 · FINAL CURRENT',1.55);
       tone(260,.12,'triangle',.024,180);
@@ -1616,6 +1703,7 @@ function rewardPassedBlocks(){
     if(o.cleared)continue;
     o.cleared=true;
     if(!o.hit && o.type==='block' && Math.abs(o.l-lane)===1){
+      healSpark();
       buildFlow(.5,.28);
       burst(W*.5+(o.l-lane)*28,H*.69,'cyan',5);
       tone(410,.045,'triangle',.012,90);
@@ -1635,6 +1723,7 @@ function collide(){
     }
     const safe=(o.type==='low'&&jump>28)||(o.type==='high'&&duck>0);
     if(safe){
+      healSpark();
       buildFlow(1,.52); triggerSurge(.58,.54); burst(W*.5,H*.69,'cyan',8);
       if(tutorialMode&&o.tutorial)finishTutorialAction(o.type==='low'?'jump':'duck',o.group);
       continue;
@@ -1656,6 +1745,7 @@ function collide(){
 }
 
 function enterOhmGate(index){
+  clinger=null;
   state='gateIntro'; playerPause=true; completedPuzzles=index; currentGate=index;
   gateIntroTimer=1.05;
   gateSplashName.textContent=`OHM GATE ${index+1}`;
@@ -2158,7 +2248,62 @@ function drawTrack(t){
   if(boostVisual>.06)drawRunnerTrail(runnerX,anchorY,jump,duck,t,reverse,boostVisual);
   drawRunnerShadow(runnerX,anchorY,jump,duck);
   drawRunner(runnerX,anchorY,jump,duck,t,reverse);
+  if(!tutorialMode)drawClinger(runnerX,anchorY-jump,t);
   if(tutorialMode)drawTutorialCue(anchorY,vanY,t);
+  ctx.restore();
+}
+function drawClinger(x,runnerY,t){
+  if(!clinger)return;
+  const warning=clinger.state==='warning';
+  const attached=clinger.state==='attached';
+  const breaking=clinger.state==='breaking';
+  const warningProgress=warning?1-Math.max(0,clinger.warningTimer)/clinger.warningTotal:1;
+  const breakProgress=breaking?1-Math.max(0,clinger.breakTimer)/clinger.breakTotal:0;
+  const hoverY=runnerY-105+Math.sin(t*9)*4-(warning?90*(1-warningProgress):0)-breakProgress*74;
+  const jitter=Math.sin(t*54)*7*clinger.shake;
+  const flyX=breaking?breakProgress*78:0;
+  const pulse=1+.045*Math.sin(t*15);
+  ctx.save();
+  if(warning){
+    const shadowAlpha=.12+.32*warningProgress;
+    ctx.fillStyle=`rgba(255,71,137,${shadowAlpha})`;
+    ctx.shadowBlur=24;ctx.shadowColor='#ff4789';
+    ctx.beginPath();ctx.ellipse(x,runnerY+19,16+warningProgress*18,5+warningProgress*5,0,0,TAU);ctx.fill();
+  }
+  if(attached){
+    const danger=1-clinger.drainTimer/clinger.drainTotal;
+    ctx.strokeStyle=`rgba(255,71,137,${.38+danger*.48})`;
+    ctx.lineWidth=3.2+danger*2.4;
+    ctx.shadowBlur=18+danger*15;ctx.shadowColor='#ff4789';
+    ctx.beginPath();
+    ctx.moveTo(x+jitter,hoverY+29);
+    for(let i=1;i<=5;i++){
+      const p=i/5;
+      ctx.lineTo(x+jitter+Math.sin(t*22+i*2.4)*(3+danger*5),lerp(hoverY+29,runnerY-31,p));
+    }
+    ctx.stroke();
+  }
+  ctx.translate(x+jitter+flyX,hoverY);
+  if(breaking)ctx.rotate(breakProgress*5.5);
+  ctx.scale(pulse,pulse);
+  ctx.shadowBlur=warning?18:24;ctx.shadowColor=warning?'#ffe06d':'#ff4789';
+  const column=breaking?1:attached?(clinger.shake>.08?0:1):0;
+  const row=breaking?1:attached&&clinger.shake>.08?1:0;
+  drawAtlasFrame(SPRITES.clinger,2,2,column,row,0,0,122,122,.5);
+  if(attached){
+    ctx.shadowBlur=12;ctx.lineWidth=2;
+    for(let i=0;i<clinger.requiredMoves;i++){
+      const complete=i<clinger.moves;
+      const px=(i-1)*17;
+      ctx.fillStyle=complete?'#8bf6ff':'#ff7290';
+      ctx.strokeStyle=complete?'#d9ffff':'#ffd1dc';
+      ctx.beginPath();ctx.arc(px,-65,5.2,0,TAU);ctx.fill();ctx.stroke();
+      if(complete){
+        ctx.strokeStyle='#082536';ctx.lineWidth=1.8;
+        ctx.beginPath();ctx.moveTo(px-2.5,-65);ctx.lineTo(px+2.5,-65);ctx.stroke();
+      }
+    }
+  }
   ctx.restore();
 }
 function laneX(l,z,reverse){
@@ -2580,6 +2725,12 @@ function renderGameToText(){
       reaction:reactionTimer>0?reactionText.textContent:'',
       rescueMode
     },
+    clinger:clinger?{
+      state:clinger.state,
+      moves:clinger.moves,
+      requiredMoves:clinger.requiredMoves,
+      drainSeconds:clinger.state==='attached'?Number(clinger.drainTimer.toFixed(2)):null
+    }:null,
     arc:currentArc+1,
     completedPuzzles,
     obstacles:visibleObstacles,

@@ -29,9 +29,13 @@ UI contexts use front-facing model art: briefing portraits, the shared race time
   - Dedicated empty raised crossbar for belly-slide hazards
   - Replaces the hanging-duck gate art
   - Matching chroma master: `assets/sprites/source/clear-slide-gate-chroma.png`
+- `assets/sprites/runtime/clinger-actions.png`
+  - 2 columns x 2 rows
+  - Warning descent, attached hover, shake reaction, and broken spin-away
+  - Matching chroma master: `assets/sprites/source/clinger-actions-chroma.png`
 
 The matching chroma-key masters are retained under `assets/sprites/source/`.
-Character atlases are integrated into gameplay. The obstacle atlas supplies the jump barrier, blocker, spark pickup, and OHM Gate; the dedicated clear gate supplies slide hazards. Procedural glow, shadows, and action prompts preserve collision readability.
+Character atlases are integrated into gameplay. The obstacle atlas supplies the jump barrier, blocker, spark pickup, and OHM Gate; the dedicated clear gate supplies slide hazards. The Clinger sheet supplies the rare magnetic pursuit hazard introduced in the second duel. Procedural glow, shadows, and action prompts preserve collision readability.
 
 ## Backgrounds
 

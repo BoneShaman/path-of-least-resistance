@@ -2,6 +2,8 @@
 
 A heartfelt four-button arcade puzzle-racer about an obsolete mechanical penguin proving that kindness is not a legacy defect.
 
+[Play The Path of Least Resistance](https://boneshaman.github.io/path-of-least-resistance/)
+
 ![Noderunner production lineup](assets/concepts/noderunner-lineup.png)
 
 ## What I Made
@@ -20,9 +22,13 @@ Both racers share one checkpoint timeline with front-facing model portraits, so 
 
 The complete campaign faces Noderunners `3200`, `3600`, and `4000`. Each rival runs two race legs, for a focused six-leg campaign. Winning is not about destroying them. It is about reconnecting the kindness their optimization removed.
 
-## Play
+## How to Play
 
-The game runs locally without a build step:
+Play the hosted version:
+
+**[Launch the game on GitHub Pages](https://boneshaman.github.io/path-of-least-resistance/)**
+
+Run it locally without a build step:
 
 ```bash
 python3 -m http.server 8000
@@ -79,6 +85,7 @@ It helped:
 - Build deterministic, solvable OHM Gate puzzles using breadth-first search
 - Implement rival racing and parallel puzzle timing
 - Tune obstacle readability, tutorial timing, Flow chaining, and failure recovery
+- Add the Clinger magnetic pursuit hazard and clean-action life recovery
 - Integrate music and state-based audio
 - Add deterministic game-state and time-stepping hooks for automated playtesting
 - Inspect screenshots and gameplay state with Playwright
@@ -105,7 +112,8 @@ See [ART_DIRECTION.md](ART_DIRECTION.md) and [ASSET_MANIFEST.md](ASSET_MANIFEST.
 
 - Single-page HTML, CSS, Canvas, and JavaScript
 - No framework or build system
-- Works as a static GitHub Pages site
+- Hosted directly from the `main` branch root with GitHub Pages
+- Relative asset paths and `.nojekyll` keep the static deployment portable
 - Procedural Web Audio effects plus supplied music tracks
 - Local progress saved with `localStorage`
 - `window.render_game_to_text()` exposes concise game state for testing
