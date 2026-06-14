@@ -14,11 +14,11 @@ Each duel alternates between:
 - Jumping, lane dodging, and electrical belly-slides
 - Chainable Flow speed boosts
 - Competitive shortest-path sliding puzzles
-- Three race arcs against a physical rival
+- Two race legs against a physical rival
 
 Both racers share one checkpoint timeline with front-facing model portraits, so the chase can be read at a glance during both running and OHM puzzles. Story exchanges reveal one speaker at a time instead of presenting the entire conversation simultaneously.
 
-The complete campaign faces Noderunners `3200`, `3600`, and `4000`. Each rival runs three race arcs, for a focused nine-leg campaign. Winning is not about destroying them. It is about reconnecting the kindness their optimization removed.
+The complete campaign faces Noderunners `3200`, `3600`, and `4000`. Each rival runs two race legs, for a focused six-leg campaign. Winning is not about destroying them. It is about reconnecting the kindness their optimization removed.
 
 ## Play
 
