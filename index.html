@@ -559,9 +559,20 @@ const MUSIC = {
   puzzle:'assets/audio/puzzle.mp3',
   between:'assets/audio/between-rounds.mp3'
 };
+const PRELOAD_IMAGES = [
+  'assets/concepts/noderunner-lineup.png',
+  'assets/backgrounds/nodewazzle-raceway-title.png',
+  'assets/sprites/runtime/noderunner-3000-actions.png',
+  'assets/sprites/runtime/noderunner-1000-actions.png',
+  'assets/sprites/runtime/rivals-run.png',
+  'assets/sprites/runtime/electromechanical-obstacles.png',
+  'assets/sprites/runtime/clear-slide-gate.png',
+  'assets/sprites/runtime/clinger-actions.png'
+];
 function loadSprite(src){
   const image=new Image();
   image.decoding='async';
+  image.loading='eager';
   image.src=src;
   return image;
 }
@@ -705,6 +716,8 @@ let activeMusic=null;
 let activeMusicKey='';
 let musicFadeToken=0;
 const musicTracks={};
+const preloadedImages=new Map();
+let assetPreloadStarted=false;
 let best = loadSave();
 
 for(const [key,src] of Object.entries(MUSIC)){
@@ -713,6 +726,44 @@ for(const [key,src] of Object.entries(MUSIC)){
   track.preload=key==='menu'?'auto':'none';
   track.volume=0;
   if(key==='menu')track.load();
+}
+function decodeImage(image){
+  if(!image)return Promise.resolve();
+  if(image.complete&&image.naturalWidth)return image.decode?image.decode().catch(()=>{}):Promise.resolve();
+  return new Promise(resolve=>{
+    image.addEventListener('load',resolve,{once:true});
+    image.addEventListener('error',resolve,{once:true});
+  }).then(()=>image.decode?image.decode().catch(()=>{}):undefined);
+}
+function preloadGameAssets(loadAudio=false){
+  if(!assetPreloadStarted){
+    assetPreloadStarted=true;
+    for(const src of PRELOAD_IMAGES){
+      let image=Object.values(SPRITES||{}).find(sprite=>sprite.src&&sprite.src.endsWith(src));
+      if(!image){
+        image=new Image();
+        image.decoding='async';
+        image.loading='eager';
+        image.src=src;
+      }
+      preloadedImages.set(src,image);
+      decodeImage(image);
+    }
+  }
+  if(loadAudio){
+    for(const track of Object.values(musicTracks)){
+      track.preload='auto';
+      if(track.readyState===0)track.load();
+    }
+  }
+}
+function whenCriticalSpritesReady(fn){
+  const critical=[SPRITES.hero,SPRITES.coach,SPRITES.rivals,SPRITES.obstacles,SPRITES.slideGate,SPRITES.clinger];
+  if(critical.every(image=>image.complete&&image.naturalWidth)){fn();return;}
+  let done=false;
+  const finish=()=>{if(done)return;done=true;fn();};
+  Promise.all(critical.map(decodeImage)).then(finish);
+  setTimeout(finish,900);
 }
 
 function loadSave(){
@@ -737,6 +788,8 @@ function resize(){
 }
 addEventListener('resize',resize,{passive:true});
 resize();
+const idle=window.requestIdleCallback||((fn)=>setTimeout(fn,120));
+idle(()=>preloadGameAssets(false));
 
 function seedBackground(){
   bgSparks=Array.from({length:Math.min(100,Math.max(48,Math.floor(W*H/11000)))},()=>({
@@ -866,6 +919,23 @@ function tone(freq=440,dur=.08,type='sine',gain=.035,slide=0){
   g.gain.exponentialRampToValueAtTime(.0001,audio.currentTime+dur);
   o.connect(g); g.connect(audio.destination); o.start(); o.stop(audio.currentTime+dur);
   o.onended=()=>{o.disconnect();g.disconnect();};
+}
+function jumpSound(){
+  tone(410,.06,'triangle',.022,210);
+  setTimeout(()=>tone(690,.055,'sine',.014,90),38);
+}
+function slideSound(){
+  tone(150,.13,'sawtooth',.018,-62);
+  setTimeout(()=>tone(92,.18,'square',.012,-28),28);
+}
+function collisionSound(){
+  tone(155,.18,'sawtooth',.052,-82);
+  setTimeout(()=>tone(72,.26,'triangle',.024,-26),34);
+}
+function boostSound(power=1){
+  tone(320+power*120,.1,'triangle',.026,310+power*125);
+  setTimeout(()=>tone(620+power*180,.075,'sine',.018,190),34);
+  setTimeout(()=>tone(175+power*55,.15,'sawtooth',.012,230),62);
 }
 function chord(){
   [180,260,390].forEach((f,i)=>setTimeout(()=>tone(f,.24,'triangle',.028,170),i*48));
@@ -1019,7 +1089,7 @@ function showBriefing(){
   ]);
   switchMusic('between');
 }
-document.getElementById('startBtn').onclick=()=>{ ensureAudio(); startMusicFromGesture('menu'); playMagicStart(); showCrawl(); };
+document.getElementById('startBtn').onclick=()=>{ ensureAudio(); preloadGameAssets(true); startMusicFromGesture('menu'); playMagicStart(); showCrawl(); };
 document.getElementById('crawlSkip').onclick=()=>{ ensureAudio(); tone(420,.08,'triangle',.024,180); finishCrawl(); };
 crawlText.addEventListener('animationend',()=>finishCrawl());
 briefBtn.onclick=advanceBriefing;
@@ -1041,7 +1111,12 @@ function updateLessonRail(){
   lessonRail.classList.toggle('show',tutorialMode);
   lessonRailEls.forEach((el,i)=>el.className=i<tutorialStep?'done':i===tutorialStep?'on':'');
 }
-function startTutorial(){
+function startTutorial(assetsReady=false){
+  if(!assetsReady&&!tutorialMode&&state!=='race'){
+    let started=false;
+    whenCriticalSpritesReady(()=>{if(started)return;started=true;startTutorial(true);});
+    return;
+  }
   tutorialMode=true; tutorialResult=false; tutorialStep=0; tutorialBarrierAt=0; tutorialGateDistance=Infinity; tutorialGroup=0; tutorialDodges=0; tutorialDodgeLane=1;
   tutorialDemoTimer=.34; tutorialReady=false;
   tutorialPuzzleDemoTimer=0; tutorialPuzzleUnlocked=false; coachTerminalPath=[]; coachTerminalStep=-1;
@@ -1055,7 +1130,12 @@ function startTutorial(){
   updateLessonRail(); setStatus('FOLLOW 1000',1.05);
   switchMusic('tutorial'); chord(); updateHud();
 }
-function startRace(){
+function startRace(assetsReady=false){
+  if(!assetsReady&&state!=='race'){
+    let started=false;
+    whenCriticalSpritesReady(()=>{if(started)return;started=true;startRace(true);});
+    return;
+  }
   tutorialMode=false; lessonRail.classList.remove('show');
   state='race'; showScreen(null); hud.classList.add('show'); puzzleLayer.classList.remove('show');
   rivalRail.hidden=false;
@@ -1184,8 +1264,8 @@ function command(dir){
   const beforeLane=lane;
   if(dir==='left'){ lane=Math.max(0,lane-1); tone(300,.045,'square',.014,70); }
   if(dir==='right'){ lane=Math.min(2,lane+1); tone(330,.045,'square',.014,70); }
-  if(dir==='up' && jump===0){ jumpVel=440; jump=.01; tone(470,.08,'triangle',.025,150); }
-  if(dir==='down'){ duck=.58; tone(205,.07,'square',.018,60); }
+  if(dir==='up' && jump===0){ jumpVel=440; jump=.01; jumpSound(); }
+  if(dir==='down'){ duck=.58; slideSound(); }
   if(lane!==beforeLane)registerClingerLaneChange();
   checkTutorialLaneAction();
 }
@@ -1653,8 +1733,7 @@ function arcAnnouncement(){
   chord();
 }
 function surgeSound(power=1){
-  tone(340+power*115,.11,'triangle',.025,290+power*150);
-  setTimeout(()=>tone(170+power*48,.16,'sawtooth',.015,250),36);
+  boostSound(power);
 }
 function triggerSurge(power=1,duration=1){
   boost=Math.max(boost,duration);
@@ -1678,7 +1757,7 @@ function damageSpark(){
   if(sparkHitCooldown>0||state!=='race')return;
   sparkHitCooldown=1.05; sparkHeart=Math.max(0,sparkHeart-1);
   dizzy=2.15; boost=0; boostVisual=0; flowChain=0; flowWindow=0; flash=1; shake=9;
-  burst(W*.5,H*.7,'rose',24); tone(160,.22,'sawtooth',.045,-70);
+  burst(W*.5,H*.7,'rose',24); collisionSound();
   setStatus(`SPARK LOST · ${sparkHeart} / 3 LIVES`,1.45);
   sparkHeartEls.forEach((el,i)=>{if(i>=sparkHeart)el.className='off shock';});
   setTimeout(()=>sparkHeartEls.forEach((el,i)=>{el.className=i<sparkHeart?'on':'off';}),620);
