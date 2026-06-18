@@ -1936,6 +1936,17 @@ function currentHintPlan(){
   }
   return plan;
 }
+function rebuildHintLabelsForStage(stage){
+  const labels=[];
+  const used=new Set();
+  for(const step of currentHintPlan()){
+    if(labels.length>=stage)break;
+    if(used.has(step.id))continue;
+    used.add(step.id);
+    labels.push({id:step.id,number:labels.length+1});
+  }
+  return labels;
+}
 function syncHintLabels(){
   // Revealed numbers belong to physical tiles and travel with them.
 }
@@ -1983,7 +1994,21 @@ function puzzleMove(tileDir){
     tone(120,.24,'sawtooth',.04,-50);
     const wasTutorial=puzzle.tutorial;
     const exit=wasTutorial?TUTORIAL_EXIT:EXIT_CONFIGS[(foeIndex+completedPuzzles)%EXIT_CONFIGS.length];
-    setTimeout(()=>{ if(state==='puzzle'){ puzzle=makePuzzle(wasTutorial?1:gateTarget(),wasTutorial,wasTutorial?2:gateReserve(foeIndex),exit); renderPuzzle(); }},430);
+    const carriedHints={
+      elapsed:puzzle.hintElapsed,
+      stage:puzzle.hintStage
+    };
+    setTimeout(()=>{
+      if(state!=='puzzle')return;
+      puzzle=makePuzzle(wasTutorial?1:gateTarget(),wasTutorial,wasTutorial?2:gateReserve(foeIndex),exit);
+      if(!wasTutorial){
+        puzzle.hintElapsed=carriedHints.elapsed;
+        puzzle.hintStage=carriedHints.stage;
+        puzzle.hintLabels=rebuildHintLabelsForStage(carriedHints.stage);
+        if(puzzle.hintStage>0)puzzleHint.textContent=`CURRENT ASSIST · ${puzzle.hintStage} MOVE${puzzle.hintStage===1?'':'S'} MARKED`;
+      }
+      renderPuzzle();
+    },430);
   }
 }
 function tileMoveDirection(pos,blank){
